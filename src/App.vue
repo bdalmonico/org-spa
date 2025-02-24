@@ -1,9 +1,16 @@
+<script>
+import Proyecto from './components/Proyecto.vue';
+
+export default {
+  components: {
+    Proyecto
+  }
+};
+</script>
+
 <template>
   <div>
-    <nav>
-      <router-link to="/">Home</router-link> |
-      <router-link to="/test">Test</router-link>
-    </nav>
-    <router-view /> <!-- Isso renderiza a rota correta -->
+    <h1>Lista de Projetos</h1>
+    <Proyecto />
   </div>
 </template>
