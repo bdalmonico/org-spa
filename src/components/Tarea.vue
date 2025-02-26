@@ -1,4 +1,4 @@
-<script>
+<!-- <script>
 import { ref, onMounted } from 'vue';
 import { apiService } from '../services/apiService';
 
@@ -23,4 +23,4 @@ export default {
     <p><strong>Descrição:</strong> {{ tarea.descripcion }}</p>
   </div>
   <p v-else>Carregando tarea...</p>
-</template>
+</template> -->

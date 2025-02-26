@@ -27,7 +27,7 @@ export default {
 </template> -->
 
 
-<template>
+<!-- <template>
   <div v-if="proyecto">
     <h2>{{ proyecto.nombre }}</h2>
     <p><strong>ID:</strong> {{ proyecto.id }}</p>
@@ -54,4 +54,4 @@ export default {
     return { proyecto };
   }
 };
-</script>
+</script> -->

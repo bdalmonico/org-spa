@@ -1,41 +1,28 @@
-// import { createRouter, createWebHistory } from 'vue-router';
-// import HomeView from '../views/HomeView.vue';
-// import ProyectosView from "../views/ProyectosView.vue";
-// import ProyectoView from "../views/ProyectoView.vue";
-// import TestView from "../views/TestView.vue";
-// // import EmpleadosView from "../views/EmpleadosView.vue";
-// // import ClientesView from "../views/ClientesView.vue";
-
-// const routes = [
-//   { path: '/', component: HomeView },
-//   { path: '/proyecto', component: ProyectoView },
-//   { path: "/proyectos", component: ProyectosView },
-//   { path: "/testview", component: TestView }
-// ];
-
-// const router = createRouter({
-//   history: createWebHistory(),
-//   routes
-// });
-
-// export default router;
-
-
 import { createRouter, createWebHistory } from 'vue-router';
-import HomeView from '../views/HomeView.vue';
-import ProyectosView from '../views/ProyectosView.vue';
-import ProyectoView from '../views/ProyectoView.vue';
+import Projetos from '../views/ProyectosView.vue';
+import ProjetoDetalhes from '../views/ProyectoDetail.vue';
+import Clientes from '../views/Clientes.vue';
+import ClienteDetalhes from '../views/ClienteDetalhes.vue';
+import Empleados from '../views/Empleados.vue';
+import EmpleadoDetalhes from '../views/EmpleadoDetalhes.vue';
+import Tareas from '../views/Tareas.vue';
+import TareaDetail from '../views/TareaDetail.vue';
 
 const routes = [
-  { path: '/', component: HomeView },
-  { path: '/home', component: HomeView },
-  { path: '/proyectos', component: ProyectosView },
-  { path: '/proyecto/:id', component: ProyectoView, props: true }
+  { path: '/', name: 'Home', component: () => import('../views/HomeView.vue') },
+  { path: '/projetos', name: 'Projetos', component: Projetos },
+  { path: '/projetos/:id', name: 'ProjetoDetalhes', component: ProjetoDetalhes },
+  { path: '/clientes', name: 'Clientes', component: Clientes },
+  { path: '/clientes/:id', name: 'ClienteDetalhes', component: ClienteDetalhes },
+  { path: '/empleados', name: 'Empleados', component: Empleados },
+  { path: '/empleados/:id', name: 'EmpleadoDetalhes', component: EmpleadoDetalhes },
+  { path: '/tareas', name: 'Tareas', component: Tareas },
+  { path: '/tareas/:id', name: 'TareaDetalhes', component: TareaDetail },
 ];
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
 });
 
 export default router;
