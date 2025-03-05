@@ -2,10 +2,15 @@
   <div class="p-8 bg-gray-100">
     <div class="flex justify-between items-center mb-4">
       <h1 class="text-2xl text-blue-800">Proyectos</h1>
-      <button class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors cursor-pointer" @click="showCrearProyectoModal = true">Crear nuevo proyecto</button>
+      <button
+        class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors cursor-pointer"
+        @click="showCrearProyectoModal = true"
+      >
+        Crear nuevo proyecto
+      </button>
     </div>
     <Buscador :campos="camposBusca" @buscar="handleBuscar" />
-    <Lista
+    <ListaProyecto
       :itens="proyectos"
       :colunas="colunasTabela"
       :loading="loading"
@@ -14,15 +19,26 @@
       @edit-item="editarProyecto"
       @delete-item="excluirProyecto"
     />
-    <CrearProyectoModal v-if="showCrearProyectoModal" :is-open="showCrearProyectoModal" @close="showCrearProyectoModal = false" @projectCreated="fetchProyectos({})" />
-    <EditarProyectoModal v-if="showEditarProyectoModal" :is-open="showEditarProyectoModal" :proyecto="projetoEditando" @close="showEditarProyectoModal = false" @projectUpdated="fetchProyectos({})" />
+    <CrearProyectoModal
+      v-if="showCrearProyectoModal"
+      :is-open="showCrearProyectoModal"
+      @close="showCrearProyectoModal = false"
+      @projectCreated="fetchProyectos({})"
+    />
+    <EditarProyectoModal
+      v-if="showEditarProyectoModal"
+      :is-open="showEditarProyectoModal"
+      :proyecto="projetoEditando"
+      @close="showEditarProyectoModal = false"
+      @projectUpdated="fetchProyectos({})"
+    />
   </div>
 </template>
 
 <script>
 import axios from 'axios';
 import Buscador from '../components/Buscador.vue';
-import Lista from '../components/Lista.vue';
+import ListaProyecto from '../components/ListaProyecto.vue';
 import CrearProyectoModal from '../components/CrearProyectoModal.vue';
 import EditarProyectoModal from '../components/EditarProyectoModal.vue';
 import { formatDate } from '../utils/dateUtils'; // Caminho relativo manual
@@ -30,7 +46,7 @@ import { formatDate } from '../utils/dateUtils'; // Caminho relativo manual
 export default {
   components: {
     Buscador,
-    Lista,
+    ListaProyecto,
     CrearProyectoModal,
     EditarProyectoModal,
   },
@@ -74,13 +90,17 @@ export default {
         const formattedProyectos = [];
         for (const proyecto of response.data.page) {
           const proyectoFormatted = {
-            id: proyecto.id,
+            id: proyecto.id, // Garantindo que o id seja válido
             nombre: proyecto.nombre,
             descripcion: proyecto.descripcion,
             estadoId: proyecto.estadoId,
             clienteNombre: proyecto.clienteNombre,
+            clienteId: proyecto.clienteId, // Novo campo adicionado
             fechaEstimadaInicio: formatDate(proyecto.fechaEstimadaInicio),
             fechaEstimadaFin: formatDate(proyecto.fechaEstimadaFin),
+            fechaRealInicio: formatDate(proyecto.fechaRealInicio), // Novo campo adicionado
+            fechaRealFin: formatDate(proyecto.fechaRealFin), // Novo campo adicionado
+            importe: proyecto.importe, // Novo campo adicionado
           };
           // Busca o nome do empregado (usando estadoId como empleadoId)
           proyectoFormatted.encargado = await this.getEmpleadoNombre(proyecto.estadoId); // Renomeado para 'encargado'
@@ -134,6 +154,7 @@ export default {
       this.fetchProyectos(filtros); // Simplesmente passa os filtros sem ajustes de datas
     },
     handleItemClicked(id) {
+      console.log('Clicou no item com ID:', id); // Depuração
       this.$router.push(`/projetos/${id}`); // Caminho manual para rota
     },
     crearProyecto() {

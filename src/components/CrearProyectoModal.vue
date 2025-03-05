@@ -110,14 +110,14 @@
         <div class="flex gap-2">
           <button
             type="submit"
-            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors cursor-pointer"
             :disabled="loading"
           >
-            Criar Projeto
+            Criar
           </button>
           <button
             type="button"
-            class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+            class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors cursor-pointer"
             @click="closeModal"
             :disabled="loading"
           >
@@ -165,14 +165,13 @@ export default {
       this.error = null;
 
       try {
-        // Formata as datas para o formato ISO 8601 antes de enviar
         const formData = new URLSearchParams();
         formData.append('nombre', this.form.nombre);
         formData.append('descripcion', this.form.descripcion);
         formData.append('clienteNombre', this.form.clienteNombre);
-        formData.append('estadoId', this.form.estadoId);
+        formData.append('estadoId', this.form.estadoId !== null ? this.form.estadoId.toString() : '');
+        formData.append('clienteId', this.form.clienteId !== null ? this.form.clienteId.toString() : '');
         formData.append('importe', this.form.importe);
-        formData.append('clienteId', this.form.clienteId);
         formData.append('fechaEstimadaInicio', this.formatToIso(this.form.fechaEstimadaInicio));
         formData.append('fechaEstimadaFin', this.formatToIso(this.form.fechaEstimadaFin));
         formData.append('fechaRealInicio', this.form.fechaRealInicio ? this.formatToIso(this.form.fechaRealInicio) : '');
@@ -184,7 +183,6 @@ export default {
           },
         });
 
-        // Emite um evento para notificar o componente pai que o projeto foi criado com sucesso
         this.$emit('projectCreated');
         this.closeModal();
       } catch (err) {
@@ -215,7 +213,7 @@ export default {
     formatToIso(dateStr) {
       if (!dateStr) return '';
       const date = new Date(dateStr);
-      return date.toISOString().split('T')[0] + 'Z'; // Formato YYYY-MM-DDZ
+      return date.toISOString().split('T')[0]; // Formato YYYY-MM-DD (o backend espera yyyy-MM-dd, mas isso deve funcionar)
     },
     // Método utilitário como método do componente (para uso no template, se necessário)
     formatDate(dateStr) {

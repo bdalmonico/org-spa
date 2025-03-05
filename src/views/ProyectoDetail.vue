@@ -195,8 +195,11 @@ export default {
           clienteNombre: proyectoResponse.data.clienteNombre,
           estadoId: proyectoResponse.data.estadoId,
           importe: proyectoResponse.data.importe,
+          clienteId: proyectoResponse.data.clienteId, // Novo campo adicionado
           fechaEstimadaInicio: formatDate(proyectoResponse.data.fechaEstimadaInicio),
           fechaEstimadaFin: formatDate(proyectoResponse.data.fechaEstimadaFin),
+          fechaRealInicio: formatDate(proyectoResponse.data.fechaRealInicio), // Novo campo adicionado
+          fechaRealFin: formatDate(proyectoResponse.data.fechaRealFin), // Novo campo adicionado
         };
         this.tareas = tareasResponse.data.page
           .filter(tarea => tarea.proyectoId === Number(id))
