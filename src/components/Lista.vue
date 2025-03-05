@@ -12,8 +12,7 @@
         <tr
           v-for="item in itens"
           :key="item.id"
-          @click="$emit('item-clicked', item.id)"
-          class="hover:bg-gray-100 border-b border-gray-200 cursor-pointer"
+          class="hover:bg-gray-100 border-b border-gray-200"
         >
           <td v-for="coluna in colunas" :key="coluna.key" class="py-2 px-4 text-gray-700">
             <span v-if="coluna.key !== 'actions' && coluna.key !== 'estado'">
