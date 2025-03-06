@@ -110,7 +110,6 @@
 
 <script>
 import axios from 'axios';
-import { formatDate } from '../utils/dateUtils'; // Caminho relativo manual
 
 export default {
   props: {
@@ -137,30 +136,40 @@ export default {
   },
   methods: {
     async submitForm() {
+      if (!this.form.nombre || !this.form.descripcion || !this.form.estadoId || !this.form.proyectoId || !this.form.fechaEstimadaInicio || !this.form.fechaEstimadaFin) {
+        this.error = 'Todos os campos obrigatórios devem ser preenchidos.';
+        return;
+      }
+
       this.loading = true;
       this.error = null;
 
       try {
         const formData = new URLSearchParams();
-        formData.append('nombre', this.form.nombre);
-        formData.append('descripcion', this.form.descripcion);
-        formData.append('estadoId', this.form.estadoId);
-        formData.append('proyectoId', this.form.proyectoId);
+        formData.append('nombre', this.form.nombre.trim());
+        formData.append('descripcion', this.form.descripcion.trim());
+        formData.append('estadoId', this.form.estadoId.toString());
+        formData.append('proyectoId', this.form.proyectoId.toString());
         formData.append('fechaEstimadaInicio', this.formatToIso(this.form.fechaEstimadaInicio));
         formData.append('fechaEstimadaFin', this.formatToIso(this.form.fechaEstimadaFin));
-        formData.append('fechaRealInicio', this.form.fechaRealInicio ? this.formatToIso(this.form.fechaRealInicio) : '');
-        formData.append('fechaRealFin', this.form.fechaRealFin ? this.formatToIso(this.form.fechaRealFin) : '');
+        if (this.form.fechaRealInicio) formData.append('fechaRealInicio', this.formatToIso(this.form.fechaRealInicio));
+        if (this.form.fechaRealFin) formData.append('fechaRealFin', this.formatToIso(this.form.fechaRealFin));
 
-        await axios.post('/api/tarea', formData, {
+        console.log('Dados enviados:', formData.toString());
+
+        const response = await axios.post('/api/tarea', formData, {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
           },
         });
 
+        console.log('Resposta da criação:', response.data);
         this.$emit('taskCreated');
         this.closeModal();
       } catch (err) {
-        this.error = 'Erro ao criar tarefa: ' + err.message;
+        console.error('Erro ao criar tarefa:', err);
+        this.error = 'Erro ao criar tarefa: ' + (err.response?.data?.message || err.message);
       } finally {
         this.loading = false;
       }
@@ -185,10 +194,7 @@ export default {
     formatToIso(dateStr) {
       if (!dateStr) return '';
       const date = new Date(dateStr);
-      return date.toISOString().split('T')[0] + 'Z'; // Formato YYYY-MM-DDZ
-    },
-    formatDate(dateStr) {
-      return formatDate(dateStr); // Usa o método do utilitário
+      return date.toISOString().split('T')[0] + 'Z';
     },
   },
 };

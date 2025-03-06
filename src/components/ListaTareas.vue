@@ -16,26 +16,21 @@
             class="hover:bg-gray-100 border-b border-gray-200 cursor-pointer"
           >
             <td v-for="coluna in colunas" :key="coluna.key" class="py-2 px-4 text-gray-700">
-              <span v-if="coluna.key !== 'actions' && coluna.key !== 'estado'">
-                {{ item[coluna.key] }}
-              </span>
-              <span v-else-if="coluna.key === 'estado'" :class="`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${item[coluna.key].class}`">
-                {{ item[coluna.key].text }}
-              </span>
-              <div v-else-if="coluna.key === 'actions'" class="relative">
+              <span v-if="coluna.key !== 'actions'">{{ item[coluna.key] }}</span>
+              <div v-if="coluna.key === 'actions'" class="relative">
                 <button @click.stop="toggleMenu(item.id)" class="text-gray-500 hover:text-gray-700 cursor-pointer">
                   <i class="fas fa-cog"></i>
                 </button>
                 <div v-if="menuAberto === item.id" class="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                  <!-- <button
+                  <button
                     class="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 cursor-pointer"
-                    @click.stop="$emit('edit-item', item.id)"
+                    @click.stop="$emit('edit-item', item)"
                   >
                     Editar
-                  </button> -->
+                  </button>
                   <button
                     class="w-full px-4 py-2 text-left text-red-500 hover:bg-gray-100 cursor-pointer"
-                    @click.stop="$emit('delete-item', item.id)"
+                    @click.stop="$emit('delete-item', item)"
                   >
                     Excluir
                   </button>
@@ -73,7 +68,7 @@
     },
     data() {
       return {
-        menuAberto: null, // ID do item com menu aberto
+        menuAberto: null,
       };
     },
     methods: {

@@ -86,7 +86,6 @@ export default {
       this.error = null;
       try {
         const response = await axios.get('/api/proyecto', { params: filtros });
-        // Formata as datas manualmente, sem usar spread operator, e busca nomes dos empregados
         const formattedProyectos = [];
         for (const proyecto of response.data.page) {
           const proyectoFormatted = {
@@ -95,16 +94,15 @@ export default {
             descripcion: proyecto.descripcion,
             estadoId: proyecto.estadoId,
             clienteNombre: proyecto.clienteNombre,
-            clienteId: proyecto.clienteId, // Novo campo adicionado
+            clienteId: proyecto.clienteId,
             fechaEstimadaInicio: formatDate(proyecto.fechaEstimadaInicio),
             fechaEstimadaFin: formatDate(proyecto.fechaEstimadaFin),
-            fechaRealInicio: formatDate(proyecto.fechaRealInicio), // Novo campo adicionado
-            fechaRealFin: formatDate(proyecto.fechaRealFin), // Novo campo adicionado
-            importe: proyecto.importe, // Novo campo adicionado
+            fechaRealInicio: formatDate(proyecto.fechaRealInicio),
+            fechaRealFin: formatDate(proyecto.fechaRealFin),
+            importe: proyecto.importe,
           };
-          // Busca o nome do empregado (usando estadoId como empleadoId)
-          proyectoFormatted.encargado = await this.getEmpleadoNombre(proyecto.estadoId); // Renomeado para 'encargado'
-          proyectoFormatted.estado = this.getEstadoBadge(proyecto.estadoId); // Adiciona o badge de status
+          proyectoFormatted.encargado = await this.getEmpleadoNombre(proyecto.estadoId);
+          proyectoFormatted.estado = this.getEstadoBadge(proyecto.estadoId);
           formattedProyectos.push(proyectoFormatted);
         }
         this.proyectos = formattedProyectos;
@@ -120,7 +118,7 @@ export default {
       }
       try {
         const response = await axios.get(`/api/empleado/${estadoId}`);
-        this.nombresEmpleados[estadoId] = response.data.nombre; // Assume que o endpoint retorna um objeto com 'nombre'
+        this.nombresEmpleados[estadoId] = response.data.nombre;
         return this.nombresEmpleados[estadoId];
       } catch (err) {
         console.warn(`Erro ao carregar nome do empregado ${estadoId}: ${err.message}`);
@@ -130,40 +128,34 @@ export default {
     },
     getEstadoBadge(estadoId) {
       switch (estadoId) {
-        case 1: // ABERTO
-          return { text: 'ABERTO', class: 'bg-green-500 text-white' };
-        case 6: // ACTIVO
-          return { text: 'ACTIVO', class: 'bg-blue-500 text-white' };
-        case 4: // APROBACION
-          return { text: 'APROBACION', class: 'bg-yellow-500 text-black' };
-        case 2: // CONCLUIDO
-          return { text: 'CONCLUIDO', class: 'bg-gray-500 text-white' };
-        case 8: // DESARROLLO
-          return { text: 'DESARROLLO', class: 'bg-purple-500 text-white' };
-        case 7: // INACTIVO
-          return { text: 'INACTIVO', class: 'bg-red-500 text-white' };
-        case 5: // PROTOTIPO
-          return { text: 'PROTOTIPO', class: 'bg-orange-500 text-white' };
-        case 3: // TRABAJANDO
-          return { text: 'TRABAJANDO', class: 'bg-cyan-500 text-white' };
-        default:
-          return { text: 'DESCONHECIDO', class: 'bg-gray-400 text-white' };
+        case 1: return { text: 'ABERTO', class: 'bg-green-500 text-white' };
+        case 6: return { text: 'ACTIVO', class: 'bg-blue-500 text-white' };
+        case 4: return { text: 'APROBACION', class: 'bg-yellow-500 text-black' };
+        case 2: return { text: 'CONCLUIDO', class: 'bg-gray-500 text-white' };
+        case 8: return { text: 'DESARROLLO', class: 'bg-purple-500 text-white' };
+        case 7: return { text: 'INACTIVO', class: 'bg-red-500 text-white' };
+        case 5: return { text: 'PROTOTIPO', class: 'bg-orange-500 text-white' };
+        case 3: return { text: 'TRABAJANDO', class: 'bg-cyan-500 text-white' };
+        default: return { text: 'DESCONHECIDO', class: 'bg-gray-400 text-white' };
       }
     },
     handleBuscar(filtros) {
-      this.fetchProyectos(filtros); // Simplesmente passa os filtros sem ajustes de datas
+      this.fetchProyectos(filtros);
     },
     handleItemClicked(id) {
-      console.log('Clicou no item com ID:', id); // Depuração
-      this.$router.push(`/projetos/${id}`); // Caminho manual para rota
-    },
-    crearProyecto() {
-      this.showCrearProyectoModal = true; // Abre o modal de criar projeto
+      console.log('Clicou no item com ID:', id);
+      this.$router.push(`/projetos/${id}`);
     },
     editarProyecto(proyectoId) {
       const proyecto = this.proyectos.find(p => p.id === proyectoId);
-      this.projetoEditando = { ...proyecto }; // Cria uma cópia do projeto para editar
-      this.showEditarProyectoModal = true; // Abre o modal de edição
+      if (!proyecto || !proyecto.id) {
+        console.error('Projeto não encontrado ou ID inválido:', proyectoId);
+        this.error = 'Erro: Projeto não encontrado.';
+        return;
+      }
+      this.proyectoEditando = { ...proyecto }; // Passa uma cópia do projeto com o id
+      this.showEditarProyectoModal = true;
+      console.log('Editando projeto com ID:', proyecto.id); // Depuração
     },
     async excluirProyecto(proyectoId) {
       if (!confirm('Tem certeza de que deseja excluir este projeto?')) return;
@@ -172,8 +164,7 @@ export default {
       this.error = null;
 
       try {
-        await axios.delete(`/api/proyecto/del/${proyectoId}`); // Ajustado para /del/{id}
-        // Atualiza a lista de projetos após exclusão
+        await axios.delete(`/api/proyecto/del/${proyectoId}`);
         await this.fetchProyectos({});
       } catch (err) {
         if (err.response && err.response.status === 400) {
@@ -185,9 +176,8 @@ export default {
         this.loading = false;
       }
     },
-    // Método utilitário como método do componente (para uso no template, se necessário)
     formatDate(dateStr) {
-      return formatDate(dateStr); // Usa o método do utilitário
+      return formatDate(dateStr);
     },
   },
 };

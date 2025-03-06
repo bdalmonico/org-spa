@@ -22,7 +22,7 @@
             </button>
           </div>
         </div>
-        <Lista
+        <ListaProyectosHome
           :itens="proyectos.slice(0, 10)"
           :colunas="colunasProyectos"
           :loading="loadingProyectos"
@@ -50,7 +50,7 @@
             </button>
           </div>
         </div>
-        <Lista
+        <ListaTareasHome
           :itens="tareas.slice(0, 10)"
           :colunas="colunasTareas"
           :loading="loadingTareas"
@@ -63,22 +63,25 @@
     <!-- Modal para Criar Projeto -->
     <CrearProyectoModal v-if="showCrearProyectoModal" :is-open="showCrearProyectoModal" @close="showCrearProyectoModal = false" @projectCreated="fetchProyectosAndTareas" />
 
-    <!-- Modal para Criar Tarefa (Assumindo que você tenha um componente similar para tarefas) -->
-    <CrearTareaModal v-if="showCrearTareaModal" :is-open="showCrearTareaModal" @close="showCrearTareaModal = false" @taskCreated="fetchProyectosAndTareas" />
+    <!-- Modal para Criar Tarefa -->
+    <CrearTareaModal v-if="showCrearTareaModal" :is-open="showCrearTareaModal" :proyectoId="null" @close="showCrearTareaModal = false" @taskCreated="fetchProyectosAndTareas" />
   </div>
 </template>
 
 <script>
 import axios from 'axios';
-import Lista from '../components/Lista.vue';
+import ListaProyectosHome from '../components/ListaProyectosHome.vue'; // Novo componente
+import ListaTareasHome from '../components/ListaTareasHome.vue'; // Novo componente
 import CrearProyectoModal from '../components/CrearProyectoModal.vue';
+import CrearTareaModal from '../components/CrearTareaModal.vue'; // Componente criado anteriormente
 import { formatDate } from '../utils/dateUtils'; // Caminho relativo manual
 
 export default {
   components: {
-    Lista,
+    ListaProyectosHome,
+    ListaTareasHome,
     CrearProyectoModal,
-    // Adicione CrearTareaModal quando implementado
+    CrearTareaModal,
   },
   data() {
     return {
@@ -93,12 +96,11 @@ export default {
       showCrearTareaModal: false,
       colunasProyectos: [
         { key: 'nombre', label: 'Nombre' },
-        
         { key: 'estado', label: 'Status' }, // Mantido badge para status
       ],
       colunasTareas: [
         { key: 'nombre', label: 'Título' },
-        { key: 'estado', label: 'Status' }, // Mantido badge para status
+        { key: 'estado', label: 'Estado' }, // Mantido badge para status
       ],
     };
   },
@@ -119,7 +121,7 @@ export default {
         for (const proyecto of Array.isArray(proyectosData) ? proyectosData : []) {
           if (!proyecto || !proyecto.id) continue; // Garante que o projeto é válido
           const proyectoFormatted = {
-            id: proyecto.id, // Mantido para navegação, mas não exibido
+            id: proyecto.id, // Mantido para navegação
             nombre: proyecto.nombre || 'Sem nome',
             descripcion: proyecto.descripcion || '',
             estadoId: proyecto.estadoId || null,
@@ -145,12 +147,11 @@ export default {
         for (const tarea of Array.isArray(tareasData) ? tareasData : []) {
           if (!tarea || !tarea.id) continue; // Garante que a tarefa é válida
           const tareaFormatted = {
-            id: tarea.id, // Mantido para navegação, mas não exibido
+            id: tarea.id, // Mantido para navegação
             nombre: tarea.nombre || 'Sem título',
             descripcion: tarea.descripcion || '',
             estadoId: tarea.estadoId || null,
             proyectoId: tarea.proyectoId || null,
-            
           };
           tareaFormatted.estado = this.getEstadoBadge(tarea.estadoId);
           formattedTareas.push(tareaFormatted);
@@ -193,10 +194,6 @@ export default {
     // Método utilitário como método do componente (para uso no template, se necessário)
     formatDate(dateStr) {
       return formatDate(dateStr); // Usa o método do utilitário
-    },
-    fetchProyectosAndTareas() {
-      this.fetchProyectos();
-      this.fetchTareas();
     },
   },
 };

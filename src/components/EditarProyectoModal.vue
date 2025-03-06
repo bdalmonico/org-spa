@@ -165,26 +165,38 @@ export default {
   },
   created() {
     // Preenche os campos com os dados do projeto ao abrir o modal
-    this.form.id = this.proyecto.id;
-    this.form.nombre = this.proyecto.nombre || '';
-    this.form.descripcion = this.proyecto.descripcion || '';
-    this.form.clienteNombre = this.proyecto.clienteNombre || '';
-    this.form.estadoId = this.proyecto.estadoId || null;
-    this.form.importe = this.proyecto.importe || '';
-    this.form.clienteId = this.proyecto.clienteId || null;
-    this.form.fechaEstimadaInicio = this.proyecto.fechaEstimadaInicio ? this.formatFromIso(this.proyecto.fechaEstimadaInicio) : '';
-    this.form.fechaEstimadaFin = this.proyecto.fechaEstimadaFin ? this.formatFromIso(this.proyecto.fechaEstimadaFin) : '';
-    this.form.fechaRealInicio = this.proyecto.fechaRealInicio ? this.formatFromIso(this.proyecto.fechaRealInicio) : '';
-    this.form.fechaRealFin = this.proyecto.fechaRealFin ? this.formatFromIso(this.proyecto.fechaRealFin) : '';
+    if (this.proyecto && this.proyecto.id) {
+      this.form.id = this.proyecto.id;
+      this.form.nombre = this.proyecto.nombre || '';
+      this.form.descripcion = this.proyecto.descripcion || '';
+      this.form.clienteNombre = this.proyecto.clienteNombre || '';
+      this.form.estadoId = this.proyecto.estadoId || null;
+      this.form.importe = this.proyecto.importe || '';
+      this.form.clienteId = this.proyecto.clienteId || null;
+      this.form.fechaEstimadaInicio = this.proyecto.fechaEstimadaInicio ? this.formatFromIso(this.proyecto.fechaEstimadaInicio) : '';
+      this.form.fechaEstimadaFin = this.proyecto.fechaEstimadaFin ? this.formatFromIso(this.proyecto.fechaEstimadaFin) : '';
+      this.form.fechaRealInicio = this.proyecto.fechaRealInicio ? this.formatFromIso(this.proyecto.fechaRealInicio) : '';
+      this.form.fechaRealFin = this.proyecto.fechaRealFin ? this.formatFromIso(this.proyecto.fechaRealFin) : '';
+      console.log('Modal aberto com ID:', this.form.id); // Depuração
+    } else {
+      console.error('Projeto ou ID inválido:', this.proyecto);
+      this.error = 'Erro: Projeto não encontrado.';
+    }
   },
   methods: {
     async submitForm() {
       this.loading = true;
       this.error = null;
 
+      if (!this.form.id) {
+        this.error = 'Erro: ID do projeto não encontrado.';
+        this.loading = false;
+        return;
+      }
+
       try {
         const formData = new URLSearchParams();
-        formData.append('id', this.form.id);
+        formData.append('id', this.form.id.toString());
         formData.append('nombre', this.form.nombre);
         formData.append('descripcion', this.form.descripcion);
         formData.append('clienteNombre', this.form.clienteNombre);
@@ -249,29 +261,23 @@ export default {
     formatToIso(dateStr) {
       if (!dateStr) return '';
       const date = new Date(dateStr);
-      return date.toISOString().split('T')[0]; // Formato YYYY-MM-DD (o backend espera yyyy-MM-dd, mas isso deve funcionar)
+      return date.toISOString().split('T')[0];
     },
     formatFromIso(dateStr) {
       if (!dateStr) return '';
       try {
-        // Remove caracteres indesejados como "<", ">", ou "Z" no final
         const cleanDateStr = dateStr.replace(/[<>Z]/g, '').trim();
         if (!cleanDateStr) return '';
-
-        // Divide a string em ano, mês e dia
         const [year, month, day] = cleanDateStr.split('-');
         if (!year || !month || !day) return '';
-
-        // Formata para YYYY-MM-DD, garantindo que mês e dia tenham 2 dígitos
         return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
       } catch (error) {
         console.warn('Erro ao formatar data:', dateStr, error);
-        return ''; // Retorna vazio se houver erro
+        return '';
       }
     },
-    // Método utilitário como método do componente (para uso no template, se necessário)
     formatDate(dateStr) {
-      return formatDate(dateStr); // Usa o método do utilitário
+      return formatDate(dateStr);
     },
   },
 };
