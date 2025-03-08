@@ -56,10 +56,10 @@
           </div>
           <div class="flex items-center gap-2">
             <button @click="verEmpleado(comentario.empleadoId)" class="text-blue-500 hover:text-blue-700">
-              <i class="fas fa-user"></i> <!-- Ícone de usuário do Font Awesome -->
+              <i class="fas fa-user"></i>
             </button>
             <button @click="toggleMenu(comentario.id)" class="text-gray-500 hover:text-gray-700">
-              <i class="fas fa-cog"></i> <!-- Ícone de configurações do Font Awesome -->
+              <i class="fas fa-cog"></i>
             </button>
           </div>
           <!-- Menu de Ações (Excluir e Editar) -->
@@ -150,7 +150,7 @@
 import axios from 'axios';
 import Lista from '../components/Lista.vue';
 import EditarProyectoModal from '../components/EditarProyectoModal.vue';
-import { formatDate } from '../utils/dateUtils'; // Caminho relativo manual
+import { formatDate } from '../utils/dateUtils';
 
 export default {
   components: {
@@ -163,13 +163,13 @@ export default {
       tareas: [],
       comentarios: [],
       totalHorasImputadas: null,
-      novoComentario: '', // Estado para o novo comentário
-      comentarioEditado: '', // Estado para o comentário em edição
-      editandoComentario: null, // ID do comentário sendo editado
-      menuAberto: null, // ID do comentário com menu aberto
+      novoComentario: '',
+      comentarioEditado: '',
+      editandoComentario: null,
+      menuAberto: null,
       loading: false,
       error: null,
-      showEditarProyectoModal: false, // Estado para o modal de edição do projeto
+      showEditarProyectoModal: false,
     };
   },
   mounted() {
@@ -183,11 +183,10 @@ export default {
       try {
         const [proyectoResponse, tareasResponse, comentariosResponse, totalHorasResponse] = await Promise.all([
           axios.get(`/api/proyecto/${id}`),
-          axios.get('/api/tarea'), // Busca todas as tarefas
+          axios.get('/api/tarea'),
           axios.get(`/api/comentarioproyecto/proyecto/${id}`),
-          axios.get('/api/imputacion/search/total', { params: { proyectoId: id } }), // Busca o total de horas imputadas
+          axios.get('/api/imputacion/search/total', { params: { proyectoId: id } }),
         ]);
-        // Formata as datas manualmente, sem usar spread operator
         this.proyecto = {
           id: proyectoResponse.data.id,
           nombre: proyectoResponse.data.nombre,
@@ -195,11 +194,11 @@ export default {
           clienteNombre: proyectoResponse.data.clienteNombre,
           estadoId: proyectoResponse.data.estadoId,
           importe: proyectoResponse.data.importe,
-          clienteId: proyectoResponse.data.clienteId, // Novo campo adicionado
+          clienteId: proyectoResponse.data.clienteId,
           fechaEstimadaInicio: formatDate(proyectoResponse.data.fechaEstimadaInicio),
           fechaEstimadaFin: formatDate(proyectoResponse.data.fechaEstimadaFin),
-          fechaRealInicio: formatDate(proyectoResponse.data.fechaRealInicio), // Novo campo adicionado
-          fechaRealFin: formatDate(proyectoResponse.data.fechaRealFin), // Novo campo adicionado
+          fechaRealInicio: formatDate(proyectoResponse.data.fechaRealInicio),
+          fechaRealFin: formatDate(proyectoResponse.data.fechaRealFin),
         };
         this.tareas = tareasResponse.data.page
           .filter(tarea => tarea.proyectoId === Number(id))
@@ -236,8 +235,8 @@ export default {
       this.loading = true;
       this.error = null;
       const id = this.proyecto.id;
-      const empleadoId = 1; // Substitua por um valor dinâmico, se disponível (ex.: do usuário logado)
-      const fechaHora = new Date().toISOString(); // Data/hora atual no formato ISO
+      const empleadoId = 1; // Substitua por um valor dinâmico, como o userId do cookie
+      const fechaHora = new Date().toISOString();
 
       try {
         await axios.post('/api/comentarioproyecto', null, {
@@ -249,7 +248,6 @@ export default {
           },
         });
 
-        // Após criar o comentário, atualiza a lista de comentários
         const response = await axios.get(`/api/comentarioproyecto/proyecto/${id}`);
         this.comentarios = response.data.page.map(comentario => ({
           id: comentario.id,
@@ -260,7 +258,7 @@ export default {
           orderBy: comentario.orderBy,
           proyectoId: comentario.proyectoId,
         }));
-        this.novoComentario = ''; // Limpa o campo de input
+        this.novoComentario = '';
       } catch (err) {
         this.error = 'Erro ao criar comentário: ' + err.message;
       } finally {
@@ -272,8 +270,8 @@ export default {
     },
     async editarComentario(comentario) {
       this.editandoComentario = comentario.id;
-      this.comentarioEditado = comentario.comentario; // Inicializa o campo de edição com o comentário atual
-      this.menuAberto = null; // Fecha o menu ao abrir o modal
+      this.comentarioEditado = comentario.comentario;
+      this.menuAberto = null;
     },
     async salvarEdicao() {
       if (!this.comentarioEditado.trim() || !this.editandoComentario) return;
@@ -281,12 +279,13 @@ export default {
       this.loading = true;
       this.error = null;
       const id = this.editandoComentario;
-      const empleadoId = 1; // Substitua por um valor dinâmico, se disponível
-      const fechaHora = new Date().toISOString(); // Atualiza a data/hora, se necessário
+      const empleadoId = 1; // Substitua por um valor dinâmico, como o userId do cookie
+      const fechaHora = new Date().toISOString().split('T')[0];
 
       try {
-        await axios.put(`/api/comentarioproyecto/${id}`, null, {
+        const response = await axios.put('/api/comentarioproyecto', null, {
           params: {
+            id: id,
             comentario: this.comentarioEditado,
             empleadoId: empleadoId,
             fechaHora: fechaHora,
@@ -294,20 +293,24 @@ export default {
           },
         });
 
-        // Atualiza a lista de comentários
-        const response = await axios.get(`/api/comentarioproyecto/proyecto/${this.proyecto.id}`);
-        this.comentarios = response.data.page.map(comentario => ({
-          id: comentario.id,
-          comentario: comentario.comentario,
-          empleadoId: comentario.empleadoId,
-          fechaHora: formatDate(comentario.fechaHora),
-          ascDesc: comentario.ascDesc,
-          orderBy: comentario.orderBy,
-          proyectoId: comentario.proyectoId,
-        }));
-        this.cancelarEdicao(); // Fecha o modal após salvar
+        if (response.status === 200) {
+          const updatedResponse = await axios.get(`/api/comentarioproyecto/proyecto/${this.proyecto.id}`);
+          this.comentarios = updatedResponse.data.page.map(comentario => ({
+            id: comentario.id,
+            comentario: comentario.comentario,
+            empleadoId: comentario.empleadoId,
+            fechaHora: formatDate(comentario.fechaHora),
+            ascDesc: comentario.ascDesc,
+            orderBy: comentario.orderBy,
+            proyectoId: comentario.proyectoId,
+          }));
+          this.cancelarEdicao();
+        } else {
+          this.error = 'Erro inesperado ao atualizar o comentário: ' + response.data;
+        }
       } catch (err) {
-        this.error = 'Erro ao editar comentário: ' + err.message;
+        this.error = 'Erro ao editar comentário: ' + (err.response?.data?.message || err.message);
+        console.error('Detalhes do erro:', err.response || err);
       } finally {
         this.loading = false;
       }
@@ -325,7 +328,6 @@ export default {
       try {
         await axios.delete(`/api/comentarioproyecto/${comentarioId}`);
 
-        // Atualiza a lista de comentários
         const response = await axios.get(`/api/comentarioproyecto/proyecto/${this.proyecto.id}`);
         this.comentarios = response.data.page.map(comentario => ({
           id: comentario.id,
@@ -336,7 +338,7 @@ export default {
           orderBy: comentario.orderBy,
           proyectoId: comentario.proyectoId,
         }));
-        this.menuAberto = null; // Fecha o menu após excluir
+        this.menuAberto = null;
       } catch (err) {
         this.error = 'Erro ao excluir comentário: ' + err.message;
       } finally {
@@ -344,13 +346,13 @@ export default {
       }
     },
     handleTareaClicked(tareaId) {
-      this.$router.push(`/tareas/${tareaId}`); // Navegação para detalhes da tarefa
+      this.$router.push(`/tareas/${tareaId}`);
     },
     verEmpleado(empleadoId) {
-      this.$router.push(`/empleados/${empleadoId}`); // Navegação para detalhes do empregado
+      this.$router.push(`/empleados/${empleadoId}`);
     },
     async editarProyecto() {
-      this.showEditarProyectoModal = true; // Abre o modal de edição
+      this.showEditarProyectoModal = true;
     },
     async borrarProyecto() {
       if (!confirm('Tem certeza de que deseja excluir este projeto?')) return;
@@ -359,8 +361,7 @@ export default {
       this.error = null;
 
       try {
-        await axios.delete(`/api/proyecto/del/${this.proyecto.id}`); // Usa o endpoint /del/{id}
-        // Redireciona para a lista de projetos após exclusão
+        await axios.delete(`/api/proyecto/del/${this.proyecto.id}`);
         this.$router.push('/projetos');
       } catch (err) {
         if (err.response && err.response.status === 400) {
@@ -372,9 +373,8 @@ export default {
         this.loading = false;
       }
     },
-    // Método utilitário como método do componente (para uso no template, se necessário)
     formatDate(dateStr) {
-      return formatDate(dateStr); // Usa o método do utilitário
+      return formatDate(dateStr);
     },
   },
 };

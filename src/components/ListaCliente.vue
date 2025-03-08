@@ -9,12 +9,15 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="cliente in clientes" :key="cliente.id" class="hover:bg-gray-100 border-b border-gray-200">
+        <tr v-for="cliente in clientesComEstado" :key="cliente.id" class="hover:bg-gray-100 border-b border-gray-200">
           <td v-for="coluna in colunas" :key="coluna.key" class="py-2 px-4 text-gray-700">
-            <span v-if="coluna.key !== 'actions'">
+            <span v-if="coluna.key !== 'actions' && coluna.key !== 'estadoId'">
               {{ cliente[coluna.key] }}
             </span>
-            <div v-else class="relative">
+            <span v-if="coluna.key === 'estadoId'">
+              {{ cliente.estadoNombre || 'Carregando...' }}
+            </span>
+            <div v-if="coluna.key === 'actions'" class="relative">
               <button
                 @click.stop="toggleMenu(cliente.id)"
                 class="text-gray-500 px-2 py-1 rounded hover:bg-gray-600 transition-colors cursor-pointer"
@@ -68,11 +71,13 @@ export default {
   data() {
     return {
       clientes: [],
+      clientesComEstado: [], // Clientes com o campo estadoNombre preenchido
       menuAberto: null,
+      estadosCache: {}, // Cache para armazenar os nomes dos estados
     };
   },
-  mounted() {
-    this.fetchClientes();
+  async mounted() {
+    await this.fetchClientes();
   },
   methods: {
     async fetchClientes() {
@@ -93,8 +98,47 @@ export default {
           formattedClientes.push(clienteFormatted);
         }
         this.clientes = formattedClientes;
+        this.clientesComEstado = [...this.clientes];
+        await this.fetchEstados();
       } catch (err) {
         this.$emit('error', 'Erro ao carregar os clientes: ' + err.message);
+      }
+    },
+    async fetchEstados() {
+      try {
+        // Extrai os estadoId únicos
+        const estadoIds = [...new Set(this.clientes.map(cliente => cliente.estadoId))].filter(id => id != null);
+        if (estadoIds.length === 0) {
+          console.log('Nenhum estadoId para buscar');
+          return;
+        }
+
+        console.log('Buscando estados para IDs:', estadoIds);
+
+        // Faz chamadas paralelas ao endpoint /api/estado/{id}
+        const requests = estadoIds.map(id =>
+          axios.get(`/api/estado/${id}`).catch(err => {
+            console.error(`Erro ao buscar estado ${id}:`, err.response?.data || err.message);
+            return { data: { nombre: 'Estado não encontrado' } }; // Fallback em caso de erro
+          })
+        );
+        const responses = await Promise.all(requests);
+
+        // Atualiza o cache com os nomes dos estados
+        responses.forEach((response, index) => {
+          const estadoId = estadoIds[index];
+          this.estadosCache[estadoId] = response.data.nombre || 'Estado não encontrado';
+          console.log(`Estado ${estadoId}: ${this.estadosCache[estadoId]}`);
+        });
+
+        // Atualiza os clientes com os nomes dos estados
+        this.clientesComEstado = this.clientes.map(cliente => ({
+          ...cliente,
+          estadoNombre: this.estadosCache[cliente.estadoId] || 'Estado não encontrado',
+        }));
+      } catch (err) {
+        console.error('Erro ao carregar os estados:', err);
+        this.$emit('error', 'Erro ao carregar os estados: ' + err.message);
       }
     },
     toggleMenu(clienteId) {
@@ -109,6 +153,13 @@ export default {
     handleDelete(id) {
       this.$emit('delete-item', id);
       this.menuAberto = null;
+    },
+  },
+  watch: {
+    // Atualiza os estados se os clientes mudarem (ex.: após edição ou recarregamento)
+    clientes(newClientes) {
+      this.clientesComEstado = [...newClientes];
+      this.fetchEstados();
     },
   },
 };

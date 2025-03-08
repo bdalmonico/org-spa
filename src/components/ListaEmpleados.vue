@@ -1,12 +1,7 @@
 <template>
   <div class="p-6">
     <h2 class="text-2xl font-bold text-blue-800 mb-4">Lista de Empregados</h2>
-    <button
-      @click="$emit('create-empleado')"
-      class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mb-4"
-    >
-      Criar Novo Empregado
-    </button>
+
 
     <div v-if="empleados.length === 0" class="text-gray-500">
       Nenhum empregado encontrado.
