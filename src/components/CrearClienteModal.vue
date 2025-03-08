@@ -112,36 +112,15 @@ export default {
       this.error = null;
 
       try {
-        const formData = new URLSearchParams();
-        const trimmedNombre = this.form.nombre.trim();
-        const trimmedEmail = this.form.email.trim();
-        formData.append('nombre', trimmedNombre);
-        formData.append('email', trimmedEmail);
-        if (this.form.nifCif) formData.append('nifCif', this.form.nifCif.trim());
-        if (this.form.telefone) formData.append('telefone', this.form.telefone.trim());
-        if (this.form.estadoId !== null) formData.append('estadoId', this.form.estadoId.toString());
+        const params = new URLSearchParams();
+        params.append('nombre', this.form.nombre.trim());
+        params.append('email', this.form.email.trim());
+        if (this.form.nifCif) params.append('nifCif', this.form.nifCif.trim());
+        if (this.form.telefone) params.append('telefone', this.form.telefone.trim());
+        if (this.form.estadoId !== null) params.append('estadoId', this.form.estadoId.toString());
 
-        console.log('Valor de form.nombre antes de enviar:', this.form.nombre);
-        console.log('Valor trimmed de nombre:', trimmedNombre);
-        console.log('Valor de form.email antes de enviar:', this.form.email);
-        console.log('Valor trimmed de email:', trimmedEmail);
-        console.log('URL da requisição:', '/api/cliente');
-        console.log('Dados enviados para criação:', {
-          nombre: trimmedNombre,
-          email: trimmedEmail,
-          nifCif: this.form.nifCif,
-          telefone: this.form.telefone,
-          estadoId: this.form.estadoId,
-        });
-        console.log('FormData como string:', formData.toString());
-
-        const response = await axios.post('/api/cliente', formData, {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json',
-          },
-          maxRedirects: 0,
-        });
+        console.log('Parâmetros enviados:', params.toString());
+        const response = await axios.post(`/api/cliente?${params.toString()}`);
 
         console.log('Resposta da criação:', response.data);
         this.$emit('clienteCreated');
@@ -150,7 +129,6 @@ export default {
         console.error('Erro ao criar cliente:', err);
         if (err.response) {
           const errorMessage = err.response.data || 'Erro desconhecido no servidor';
-          console.log('Resposta de erro do servidor:', errorMessage);
           switch (err.response.status) {
             case 400:
               this.error = 'Erro nos dados fornecidos: ' + errorMessage;

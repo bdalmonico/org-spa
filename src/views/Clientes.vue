@@ -74,13 +74,19 @@ export default {
       ],
     };
   },
+  mounted() {
+    this.fetchClientes();
+  },
   methods: {
     async fetchClientes(filtros = {}) {
       this.loading = true;
       this.error = null;
       try {
         const response = await axios.get('/api/cliente', { params: { ...filtros, size: 10 } });
-        // A lista é gerenciada dentro de ListaCliente.vue
+        this.$refs.listaCliente.clientes = response.data.page.map(cliente => ({
+          ...cliente,
+          estadoId: cliente.estadoId || null, // Garantir que estadoId seja null se undefined
+        }));
       } catch (err) {
         this.error = 'Erro ao carregar os clientes: ' + err.message;
       } finally {
@@ -91,17 +97,17 @@ export default {
       this.fetchClientes(filtros);
     },
     editarCliente(clienteId) {
-      console.log('Tentando editar cliente com ID recebido:', clienteId); // Depuração
+      console.log('Tentando editar cliente com ID recebido:', clienteId);
       const cliente = this.$refs.listaCliente.clientes.find(c => c.id === clienteId);
       if (!cliente || !cliente.id) {
         console.error('Cliente não encontrado ou ID inválido:', clienteId);
         this.error = 'Erro: Cliente não encontrado.';
         return;
       }
-      this.clienteEditando = { ...cliente }; // Garante que o id esteja incluído
-      console.log('ClienteEditando antes de passar ao modal:', this.clienteEditando); // Depuração
+      this.clienteEditando = { ...cliente };
+      console.log('ClienteEditando antes de passar ao modal:', this.clienteEditando);
       this.showEditarClienteModal = true;
-      console.log('Modal de edição aberto para cliente com ID:', this.clienteEditando.id); // Depuração
+      console.log('Modal de edição aberto para cliente com ID:', this.clienteEditando.id);
     },
     async excluirCliente(clienteId) {
       if (!confirm('Tem certeza de que deseja excluir este cliente?')) return;
@@ -111,8 +117,8 @@ export default {
 
       try {
         const response = await axios.delete(`/api/cliente/${clienteId}`);
-        console.log('Resposta da exclusão:', response.data); // Depuração
-        this.$refs.listaCliente.fetchClientes(); // Recarrega a lista
+        console.log('Resposta da exclusão:', response.data);
+        this.fetchClientes(); // Recarrega a lista
       } catch (err) {
         console.error('Erro ao excluir cliente:', err);
         if (err.response) {

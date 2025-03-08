@@ -120,7 +120,7 @@ export default {
     };
   },
   created() {
-    console.log('Cliente recebido no modal:', this.cliente); // Depuração
+    console.log('Cliente recebido no modal:', this.cliente);
     if (this.cliente && typeof this.cliente.id !== 'undefined') {
       this.form.id = this.cliente.id;
       this.form.nombre = this.cliente.nombre || '';
@@ -128,7 +128,7 @@ export default {
       this.form.nifCif = this.cliente.nifCif || '';
       this.form.telefone = this.cliente.telefone || '';
       this.form.estadoId = this.cliente.estadoId || null;
-      console.log('Form inicializado com ID:', this.form.id); // Depuração
+      console.log('Form inicializado com ID:', this.form.id);
     } else {
       console.error('Cliente ou ID inválido:', this.cliente);
       this.error = 'Erro: Cliente não encontrado.';
@@ -139,7 +139,7 @@ export default {
       this.loading = true;
       this.error = null;
 
-      console.log('Enviando form com ID:', this.form.id); // Depuração
+      console.log('Enviando form com ID:', this.form.id);
       if (!this.form.id) {
         this.error = 'Erro: ID do cliente não encontrado no formulário.';
         this.loading = false;
@@ -147,30 +147,18 @@ export default {
       }
 
       try {
-        const formData = new URLSearchParams();
-        formData.append('id', this.form.id.toString());
-        formData.append('nombre', this.form.nombre);
-        formData.append('email', this.form.email);
-        formData.append('nifCif', this.form.nifCif);
-        formData.append('telefone', this.form.telefone);
-        formData.append('estadoId', this.form.estadoId !== null ? this.form.estadoId.toString() : '');
+        const params = new URLSearchParams();
+        params.append('id', this.form.id.toString());
+        params.append('nombre', this.form.nombre);
+        params.append('email', this.form.email);
+        params.append('nifCif', this.form.nifCif);
+        params.append('telefone', this.form.telefone);
+        params.append('estadoId', this.form.estadoId !== null ? this.form.estadoId.toString() : '');
 
-        console.log('Dados enviados na requisição:', {
-          id: this.form.id,
-          nombre: this.form.nombre,
-          email: this.form.email,
-          nifCif: this.form.nifCif,
-          telefone: this.form.telefone,
-          estadoId: this.form.estadoId,
-        }); // Depuração
+        console.log('Parâmetros enviados:', params.toString());
+        const response = await axios.put(`/api/cliente?${params.toString()}`);
 
-        const response = await axios.put('/api/cliente', formData, {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        });
-        console.log('Resposta da atualização:', response.data); // Depuração
-
+        console.log('Resposta da atualização:', response.data);
         this.$emit('clienteUpdated');
         this.closeModal();
       } catch (err) {
