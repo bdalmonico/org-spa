@@ -91,7 +91,8 @@ export default {
       this.error = null;
 
       try {
-        const response = await axios.delete(`/v1/empleado?id=${empleadoId}`);
+        console.log(`Tentando excluir empregado com ID: ${empleadoId}`); // Log para depuração
+        const response = await axios.delete(`/api/empleado/del/${empleadoId}`);
 
         if (response.status === 200) {
           alert('Empregado excluído com sucesso!');
@@ -100,6 +101,7 @@ export default {
           throw new Error('Erro inesperado na exclusão.');
         }
       } catch (err) {
+        console.error('Erro ao excluir empregado:', err); // Log para depuração
         if (err.response && err.response.status === 404) {
           this.error = `Empregado ${empleadoId} não encontrado.`;
         } else if (err.response && err.response.status === 400) {
