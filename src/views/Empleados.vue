@@ -10,22 +10,13 @@
       </button>
     </div>
     <Buscador :campos="camposBusca" @buscar="handleBuscar" />
-    <Lista
-      :itens="empleados"
+    <ListaEmpleados
+      :empleados="empleados"
       :colunas="colunasTabela"
       :loading="loading"
       :error="error"
-      @edit-item="editarEmpleado"
+      @create-empleado="showCrearEmpleadoModal = true"
       @delete-item="excluirEmpleado"
-    />
-    <EditarEmpleadoModal
-      v-if="showEditarEmpleadoModal"
-      :is-open="showEditarEmpleadoModal"
-      :empleado="empleadoEditando"
-      :modo="modoModal"
-      @close="closeModal"
-      @empleadoUpdated="fetchEmpleados({})"
-      @empleadoDeleted="fetchEmpleados({})"
     />
     <CrearEmpleadoModal
       v-if="showCrearEmpleadoModal"
@@ -39,15 +30,13 @@
 <script>
 import axios from 'axios';
 import Buscador from '../components/Buscador.vue';
-import Lista from '../components/Lista.vue';
-import EditarEmpleadoModal from '../components/EditarEmpleadoModal.vue';
+import ListaEmpleados from '../components/ListaEmpleados.vue';
 import CrearEmpleadoModal from '../components/CrearEmpleadoModal.vue';
 
 export default {
   components: {
     Buscador,
-    Lista,
-    EditarEmpleadoModal,
+    ListaEmpleados,
     CrearEmpleadoModal,
   },
   data() {
@@ -55,10 +44,7 @@ export default {
       empleados: [],
       loading: false,
       error: null,
-      showEditarEmpleadoModal: false, // Estado para o modal de edição/exclusão
-      showCrearEmpleadoModal: false, // Estado para o modal de criação
-      empleadoEditando: null, // Empregado sendo editado/excluído
-      modoModal: 'editar', // Modo do modal: 'editar' ou 'borrar'
+      showCrearEmpleadoModal: false,
       camposBusca: [
         { name: 'nombre', label: 'Nome', type: 'text', placeholder: 'Digite o nome' },
         { name: 'email', label: 'Email', type: 'text', placeholder: 'Digite o email' },
@@ -67,10 +53,11 @@ export default {
       colunasTabela: [
         { key: 'id', label: 'ID' },
         { key: 'nombre', label: 'Nome' },
+        { key: 'apellido', label: 'Sobrenome' },
         { key: 'email', label: 'Email' },
-        { key: 'fechaAlta', label: 'Fecha de alta' },
-        { key: 'rolId', label: 'Rol ID' },
-        { key: 'actions', label: '' }, // Botão de configurações
+        { key: 'fechaAlta', label: 'Data de Admissão' },
+        { key: 'rolId', label: 'Papel' },
+        { key: 'actions', label: '' },
       ],
     };
   },
@@ -83,7 +70,11 @@ export default {
       this.error = null;
       try {
         const response = await axios.get('/api/empleado', { params: filtros });
-        this.empleados = response.data.page; // 'page' contém a lista de empregados
+        const formattedEmpleados = response.data.page.map(empleado => ({
+          ...empleado,
+          fechaAlta: this.formatDate(empleado.fechaAlta),
+        }));
+        this.empleados = formattedEmpleados || [];
       } catch (err) {
         this.error = 'Erro ao carregar os empregados: ' + err.message;
       } finally {
@@ -93,23 +84,36 @@ export default {
     handleBuscar(filtros) {
       this.fetchEmpleados(filtros);
     },
-    editarEmpleado(empleadoId) {
-      const empleado = this.empleados.find(e => e.id === empleadoId);
-      this.empleadoEditando = { ...empleado }; // Cria uma cópia do empregado para editar
-      this.modoModal = 'editar';
-      this.showEditarEmpleadoModal = true; // Abre o modal em modo de edição
+    async excluirEmpleado(empleadoId) {
+      if (!confirm('Tem certeza de que deseja excluir este empregado?')) return;
+
+      this.loading = true;
+      this.error = null;
+
+      try {
+        const response = await axios.delete(`/v1/empleado?id=${empleadoId}`);
+
+        if (response.status === 200) {
+          alert('Empregado excluído com sucesso!');
+          await this.fetchEmpleados({}); // Atualiza a lista após a exclusão
+        } else {
+          throw new Error('Erro inesperado na exclusão.');
+        }
+      } catch (err) {
+        if (err.response && err.response.status === 404) {
+          this.error = `Empregado ${empleadoId} não encontrado.`;
+        } else if (err.response && err.response.status === 400) {
+          this.error = 'ID inválido fornecido.';
+        } else {
+          this.error = 'Erro ao excluir empregado: ' + (err.response?.data || err.message);
+        }
+      } finally {
+        this.loading = false;
+      }
     },
-    excluirEmpleado(empleadoId) {
-      const empleado = this.empleados.find(e => e.id === empleadoId);
-      this.empleadoEditando = { ...empleado }; // Cria uma cópia do empregado para excluir
-      this.modoModal = 'borrar';
-      this.showEditarEmpleadoModal = true; // Abre o modal em modo de exclusão
-    },
-    closeModal() {
-      this.showEditarEmpleadoModal = false;
-      this.showCrearEmpleadoModal = false;
-      this.empleadoEditando = null;
-      this.modoModal = 'editar';
+    formatDate(date) {
+      if (!date) return '';
+      return new Date(date).toLocaleDateString('pt-BR');
     },
   },
 };

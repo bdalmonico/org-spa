@@ -27,12 +27,6 @@
               </button>
               <div v-if="menuAberto === item.id" class="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-md shadow-lg z-10">
                 <button
-                  class="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 cursor-pointer"
-                  @click.stop="$emit('edit-item', item.id)"
-                >
-                  Editar
-                </button>
-                <button
                   class="w-full px-4 py-2 text-left text-red-500 hover:bg-gray-100 cursor-pointer"
                   @click.stop="$emit('delete-item', item.id)"
                 >

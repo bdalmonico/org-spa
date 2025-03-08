@@ -1,7 +1,5 @@
 <template>
   <div class="p-8 bg-gray-100 min-h-screen">
-    <h1 class="text-3xl font-bold text-center text-blue-800 mb-8">ORGANIZATE</h1>
-
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <!-- Widget de Projetos -->
       <div class="bg-white p-6 rounded-lg shadow-lg">
@@ -61,20 +59,31 @@
     </div>
 
     <!-- Modal para Criar Projeto -->
-    <CrearProyectoModal v-if="showCrearProyectoModal" :is-open="showCrearProyectoModal" @close="showCrearProyectoModal = false" @projectCreated="fetchProyectosAndTareas" />
+    <CrearProyectoModal
+      v-if="showCrearProyectoModal"
+      :is-open="showCrearProyectoModal"
+      @close="showCrearProyectoModal = false"
+      @projectCreated="fetchProyectosAndTareas"
+    />
 
     <!-- Modal para Criar Tarefa -->
-    <CrearTareaModal v-if="showCrearTareaModal" :is-open="showCrearTareaModal" :proyectoId="null" @close="showCrearTareaModal = false" @taskCreated="fetchProyectosAndTareas" />
+    <CrearTareaModal
+      v-if="showCrearTareaModal"
+      :is-open="showCrearTareaModal"
+      :proyectoId="null"
+      @close="showCrearTareaModal = false"
+      @taskCreated="fetchProyectosAndTareas"
+    />
   </div>
 </template>
 
 <script>
 import axios from 'axios';
-import ListaProyectosHome from '../components/ListaProyectosHome.vue'; // Novo componente
-import ListaTareasHome from '../components/ListaTareasHome.vue'; // Novo componente
+import ListaProyectosHome from '../components/ListaProyectosHome.vue';
+import ListaTareasHome from '../components/ListaTareasHome.vue';
 import CrearProyectoModal from '../components/CrearProyectoModal.vue';
-import CrearTareaModal from '../components/CrearTareaModal.vue'; // Componente criado anteriormente
-import { formatDate } from '../utils/dateUtils'; // Caminho relativo manual
+import CrearTareaModal from '../components/CrearTareaModal.vue';
+import { formatDate } from '../utils/dateUtils';
 
 export default {
   components: {
@@ -87,7 +96,7 @@ export default {
     return {
       proyectos: [],
       tareas: [],
-      nombresEmpleados: {}, // Armazena os nomes dos empregados por estadoId (mantido para compatibilidade, mas não usado)
+      nombresEmpleados: {},
       loadingProyectos: false,
       loadingTareas: false,
       errorProyectos: null,
@@ -96,11 +105,11 @@ export default {
       showCrearTareaModal: false,
       colunasProyectos: [
         { key: 'nombre', label: 'Nombre' },
-        { key: 'estado', label: 'Status' }, // Mantido badge para status
+        { key: 'estado', label: 'Status' },
       ],
       colunasTareas: [
         { key: 'nombre', label: 'Título' },
-        { key: 'estado', label: 'Estado' }, // Mantido badge para status
+        { key: 'estado', label: 'Estado' },
       ],
     };
   },
@@ -115,13 +124,13 @@ export default {
       this.loadingProyectos = true;
       this.errorProyectos = null;
       try {
-        const response = await axios.get('/api/proyecto', { params: { size: 10 } }); // Limita a 10 itens
+        const response = await axios.get('/api/proyecto', { params: { size: 10 } });
         const formattedProyectos = [];
-        const proyectosData = response.data.page || response.data.content || response.data || []; // Tenta lidar com diferentes formatos
+        const proyectosData = response.data.page || response.data.content || response.data || [];
         for (const proyecto of Array.isArray(proyectosData) ? proyectosData : []) {
-          if (!proyecto || !proyecto.id) continue; // Garante que o projeto é válido
+          if (!proyecto || !proyecto.id) continue;
           const proyectoFormatted = {
-            id: proyecto.id, // Mantido para navegação
+            id: proyecto.id,
             nombre: proyecto.nombre || 'Sem nome',
             descripcion: proyecto.descripcion || '',
             estadoId: proyecto.estadoId || null,
@@ -141,13 +150,13 @@ export default {
       this.loadingTareas = true;
       this.errorTareas = null;
       try {
-        const response = await axios.get('/api/tarea', { params: { size: 10 } }); // Limita a 10 itens
+        const response = await axios.get('/api/tarea', { params: { size: 10 } });
         const formattedTareas = [];
-        const tareasData = response.data.page || response.data.content || response.data || []; // Tenta lidar com diferentes formatos
+        const tareasData = response.data.page || response.data.content || response.data || [];
         for (const tarea of Array.isArray(tareasData) ? tareasData : []) {
-          if (!tarea || !tarea.id) continue; // Garante que a tarefa é válida
+          if (!tarea || !tarea.id) continue;
           const tareaFormatted = {
-            id: tarea.id, // Mantido para navegação
+            id: tarea.id,
             nombre: tarea.nombre || 'Sem título',
             descripcion: tarea.descripcion || '',
             estadoId: tarea.estadoId || null,
@@ -165,21 +174,21 @@ export default {
     },
     getEstadoBadge(estadoId) {
       switch (estadoId) {
-        case 1: // ABERTO
+        case 1:
           return { text: 'ABERTO', class: 'bg-green-500 text-white' };
-        case 6: // ACTIVO
+        case 6:
           return { text: 'ACTIVO', class: 'bg-blue-500 text-white' };
-        case 4: // APROBACION
+        case 4:
           return { text: 'APROBACION', class: 'bg-yellow-500 text-black' };
-        case 2: // CONCLUIDO
+        case 2:
           return { text: 'CONCLUIDO', class: 'bg-gray-500 text-white' };
-        case 8: // DESARROLLO
+        case 8:
           return { text: 'DESARROLLO', class: 'bg-purple-500 text-white' };
-        case 7: // INACTIVO
+        case 7:
           return { text: 'INACTIVO', class: 'bg-red-500 text-white' };
-        case 5: // PROTOTIPO
+        case 5:
           return { text: 'PROTOTIPO', class: 'bg-orange-500 text-white' };
-        case 3: // TRABAJANDO
+        case 3:
           return { text: 'TRABAJANDO', class: 'bg-cyan-500 text-white' };
         default:
           return { text: 'DESCONHECIDO', class: 'bg-gray-400 text-white' };
@@ -191,9 +200,8 @@ export default {
     handleTareaClicked(id) {
       this.$router.push(`/tareas/${id}`);
     },
-    // Método utilitário como método do componente (para uso no template, se necessário)
     formatDate(dateStr) {
-      return formatDate(dateStr); // Usa o método do utilitário
+      return formatDate(dateStr);
     },
   },
 };

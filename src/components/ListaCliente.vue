@@ -17,18 +17,18 @@
               <div v-else class="relative">
                 <button
                   @click.stop="toggleMenu(cliente.id)"
-                  class="bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-600 transition-colors cursor-pointer"
+                  class=" text-gray-500 px-2 py-1 rounded hover:bg-gray-600 transition-colors cursor-pointer"
                   :disabled="loading"
                 >
                   <i class="fas fa-cog"></i>
                 </button>
                 <div v-if="menuAberto === cliente.id" class="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                  <!-- <button
+                  <button
                     @click.stop="handleEdit(cliente.id)"
                     class="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100"
                   >
                     <i class="fas fa-edit mr-2"></i> Editar
-                  </button> -->
+                  </button>
                   <button
                     @click.stop="handleDelete(cliente.id)"
                     class="w-full px-4 py-2 text-left text-red-500 hover:bg-gray-100"
