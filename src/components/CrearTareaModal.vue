@@ -145,31 +145,40 @@ export default {
       this.error = null;
 
       try {
-        const formData = new URLSearchParams();
-        formData.append('nombre', this.form.nombre.trim());
-        formData.append('descripcion', this.form.descripcion.trim());
-        formData.append('estadoId', this.form.estadoId.toString());
-        formData.append('proyectoId', this.form.proyectoId.toString());
-        formData.append('fechaEstimadaInicio', this.formatToIso(this.form.fechaEstimadaInicio));
-        formData.append('fechaEstimadaFin', this.formatToIso(this.form.fechaEstimadaFin));
-        if (this.form.fechaRealInicio) formData.append('fechaRealInicio', this.formatToIso(this.form.fechaRealInicio));
-        if (this.form.fechaRealFin) formData.append('fechaRealFin', this.formatToIso(this.form.fechaRealFin));
+        const params = new URLSearchParams();
+        params.append('nombre', this.form.nombre.trim());
+        params.append('descripcion', this.form.descripcion.trim());
+        params.append('estadoId', this.form.estadoId.toString());
+        params.append('proyectoId', this.form.proyectoId.toString());
+        params.append('fechaEstimadaInicio', this.formatDate(this.form.fechaEstimadaInicio));
+        params.append('fechaEstimadaFin', this.formatDate(this.form.fechaEstimadaFin));
+        if (this.form.fechaRealInicio) params.append('fechaRealInicio', this.formatDate(this.form.fechaRealInicio));
+        if (this.form.fechaRealFin) params.append('fechaRealFin', this.formatDate(this.form.fechaRealFin));
 
-        console.log('Dados enviados:', formData.toString());
+        console.log('Parâmetros enviados:', params.toString());
 
-        const response = await axios.post('/api/tarea', formData, {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json',
-          },
-        });
+        const response = await axios.post(`/api/tarea/crear?${params.toString()}`);
 
         console.log('Resposta da criação:', response.data);
         this.$emit('taskCreated');
         this.closeModal();
       } catch (err) {
         console.error('Erro ao criar tarefa:', err);
-        this.error = 'Erro ao criar tarefa: ' + (err.response?.data?.message || err.message);
+        if (err.response) {
+          const errorMessage = err.response.data || 'Erro desconhecido no servidor';
+          switch (err.response.status) {
+            case 400:
+              this.error = 'Erro nos dados fornecidos: ' + errorMessage;
+              break;
+            case 500:
+              this.error = 'Erro interno do servidor: ' + errorMessage;
+              break;
+            default:
+              this.error = 'Erro ao criar tarefa: ' + errorMessage;
+          }
+        } else {
+          this.error = 'Erro ao criar tarefa: ' + err.message;
+        }
       } finally {
         this.loading = false;
       }
@@ -191,10 +200,9 @@ export default {
       };
       this.error = null;
     },
-    formatToIso(dateStr) {
+    formatDate(dateStr) {
       if (!dateStr) return '';
-      const date = new Date(dateStr);
-      return date.toISOString().split('T')[0] + 'Z';
+      return dateStr; // A API espera yyyy-MM-dd, que já é o formato padrão do input type="date"
     },
   },
 };

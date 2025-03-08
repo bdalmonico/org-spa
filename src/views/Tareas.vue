@@ -82,6 +82,7 @@ export default {
       this.loading = true;
       this.error = null;
       try {
+        console.log('Buscando tarefas com filtros:', filtros);
         const response = await axios.get('/api/tarea', { params: filtros });
         this.tareas = response.data.page.map(tarea => ({
           ...tarea,
@@ -92,6 +93,7 @@ export default {
         }));
       } catch (err) {
         this.error = 'Erro ao carregar as tarefas: ' + err.message;
+        console.error('Erro ao buscar tarefas:', err);
       } finally {
         this.loading = false;
       }
@@ -103,6 +105,7 @@ export default {
       this.$router.push(`/tareas/${id}`);
     },
     editarTarea(tarea) {
+      console.log('Editando tarefa:', tarea);
       this.tareaEditando = { ...tarea };
       this.showEditarTareaModal = true;
     },
@@ -113,14 +116,16 @@ export default {
       this.error = null;
 
       try {
+        console.log('Excluindo tarefa com ID:', tarea.id);
         await axios.delete(`/api/tarea/${tarea.id}`);
         await this.fetchTareas({});
       } catch (err) {
         if (err.response && err.response.status === 404) {
           this.error = 'Tarefa ' + tarea.id + ' não encontrada';
         } else {
-          this.error = 'Erro ao excluir tarefa: ' + (err.message || 'Tente novamente.');
+          this.error = 'Erro ao excluir tarefa: ' + (err.response?.data?.message || err.message);
         }
+        console.error('Erro ao excluir tarefa:', err);
       } finally {
         this.loading = false;
       }
