@@ -36,29 +36,24 @@
 </template>
 
 <script>
-import axios from 'axios';
+import proyectoService from '../services/proyectoService';
 import Buscador from '../components/Buscador.vue';
 import ListaProyecto from '../components/ListaProyecto.vue';
 import CrearProyectoModal from '../components/CrearProyectoModal.vue';
 import EditarProyectoModal from '../components/EditarProyectoModal.vue';
-import { formatDate } from '../utils/dateUtils'; // Caminho relativo manual
+import { formatDate } from '../utils/dateUtils';
 
 export default {
-  components: {
-    Buscador,
-    ListaProyecto,
-    CrearProyectoModal,
-    EditarProyectoModal,
-  },
+  components: { Buscador, ListaProyecto, CrearProyectoModal, EditarProyectoModal },
   data() {
     return {
       proyectos: [],
-      nombresEmpleados: {}, // Armazena os nomes dos empregados por estadoId
+      nombresEmpleados: {},
       loading: false,
       error: null,
-      showCrearProyectoModal: false, // Estado para o modal de criar
-      showEditarProyectoModal: false, // Estado para o modal de editar
-      projetoEditando: null, // Projeto sendo editado
+      showCrearProyectoModal: false,
+      showEditarProyectoModal: false,
+      projetoEditando: null,
       camposBusca: [
         { name: 'nombre', label: 'Nome', type: 'text', placeholder: 'Digite o nome' },
         { name: 'estadoId', label: 'Estado ID', type: 'number', placeholder: 'ID do estado' },
@@ -69,11 +64,11 @@ export default {
       colunasTabela: [
         { key: 'id', label: 'ID' },
         { key: 'nombre', label: 'Nombre' },
-        { key: 'encargado', label: 'Encargado' }, // Renomeado de 'Empleado' para 'Encargado'
-        { key: 'fechaEstimadaInicio', label: 'Desde' }, // Adicionada data estimada de início
-        { key: 'fechaEstimadaFin', label: 'Hasta' }, // Adicionada data estimada de fim
-        { key: 'estado', label: 'Status' }, // Badge para status
-        { key: 'actions', label: '' }, // Botão de configurações sem texto
+        { key: 'encargado', label: 'Encargado' },
+        { key: 'fechaEstimadaInicio', label: 'Desde' },
+        { key: 'fechaEstimadaFin', label: 'Hasta' },
+        { key: 'estado', label: 'Status' },
+        { key: 'actions', label: '' },
       ],
     };
   },
@@ -85,45 +80,32 @@ export default {
       this.loading = true;
       this.error = null;
       try {
-        const response = await axios.get('/api/proyecto', { params: filtros });
-        const formattedProyectos = [];
-        for (const proyecto of response.data.page) {
-          const proyectoFormatted = {
-            id: proyecto.id, // Garantindo que o id seja válido
-            nombre: proyecto.nombre,
-            descripcion: proyecto.descripcion,
-            estadoId: proyecto.estadoId,
-            clienteNombre: proyecto.clienteNombre,
-            clienteId: proyecto.clienteId,
-            fechaEstimadaInicio: formatDate(proyecto.fechaEstimadaInicio),
-            fechaEstimadaFin: formatDate(proyecto.fechaEstimadaFin),
-            fechaRealInicio: formatDate(proyecto.fechaRealInicio),
-            fechaRealFin: formatDate(proyecto.fechaRealFin),
-            importe: proyecto.importe,
-          };
-          proyectoFormatted.encargado = await this.getEmpleadoNombre(proyecto.estadoId);
-          proyectoFormatted.estado = this.getEstadoBadge(proyecto.estadoId);
-          formattedProyectos.push(proyectoFormatted);
-        }
+        const data = await proyectoService.getProyectos(filtros);
+        const formattedProyectos = await Promise.all(
+          data.page.map(async proyecto => {
+            const encargado = await proyectoService.getEmpleadoNombre(proyecto.estadoId).catch(() => 'Desconhecido');
+            return {
+              id: proyecto.id,
+              nombre: proyecto.nombre,
+              descripcion: proyecto.descripcion,
+              estadoId: proyecto.estadoId,
+              clienteNombre: proyecto.clienteNombre,
+              clienteId: proyecto.clienteId,
+              fechaEstimadaInicio: formatDate(proyecto.fechaEstimadaInicio),
+              fechaEstimadaFin: formatDate(proyecto.fechaEstimadaFin),
+              fechaRealInicio: formatDate(proyecto.fechaRealInicio),
+              fechaRealFin: formatDate(proyecto.fechaRealFin),
+              importe: proyecto.importe,
+              encargado,
+              estado: this.getEstadoBadge(proyecto.estadoId),
+            };
+          })
+        );
         this.proyectos = formattedProyectos;
       } catch (err) {
         this.error = 'Erro ao carregar os proyectos: ' + err.message;
       } finally {
         this.loading = false;
-      }
-    },
-    async getEmpleadoNombre(estadoId) {
-      if (!estadoId || this.nombresEmpleados[estadoId]) {
-        return this.nombresEmpleados[estadoId] || 'Desconhecido';
-      }
-      try {
-        const response = await axios.get(`/api/empleado/${estadoId}`);
-        this.nombresEmpleados[estadoId] = response.data.nombre;
-        return this.nombresEmpleados[estadoId];
-      } catch (err) {
-        console.warn(`Erro ao carregar nome do empregado ${estadoId}: ${err.message}`);
-        this.nombresEmpleados[estadoId] = 'Desconhecido';
-        return 'Desconhecido';
       }
     },
     getEstadoBadge(estadoId) {
@@ -143,41 +125,32 @@ export default {
       this.fetchProyectos(filtros);
     },
     handleItemClicked(id) {
-      console.log('Clicou no item com ID:', id);
       this.$router.push(`/projetos/${id}`);
     },
     editarProyecto(proyectoId) {
       const proyecto = this.proyectos.find(p => p.id === proyectoId);
-      if (!proyecto || !proyecto.id) {
-        console.error('Projeto não encontrado ou ID inválido:', proyectoId);
+      if (!proyecto) {
         this.error = 'Erro: Projeto não encontrado.';
         return;
       }
-      this.proyectoEditando = { ...proyecto }; // Passa uma cópia do projeto com o id
+      this.projetoEditando = { ...proyecto };
       this.showEditarProyectoModal = true;
-      console.log('Editando projeto com ID:', proyecto.id); // Depuração
     },
     async excluirProyecto(proyectoId) {
       if (!confirm('Tem certeza de que deseja excluir este projeto?')) return;
 
       this.loading = true;
       this.error = null;
-
       try {
-        await axios.delete(`/api/proyecto/del/${proyectoId}`);
+        await proyectoService.deleteProyecto(proyectoId);
         await this.fetchProyectos({});
       } catch (err) {
-        if (err.response && err.response.status === 400) {
-          this.error = 'Projeto ' + proyectoId + ' não encontrado';
-        } else {
-          this.error = 'Erro ao excluir projeto: ' + (err.message || 'Tente novamente.');
-        }
+        this.error = err.response?.status === 400
+          ? 'Projeto ' + proyectoId + ' não encontrado'
+          : 'Erro ao excluir projeto: ' + (err.response?.data || err.message);
       } finally {
         this.loading = false;
       }
-    },
-    formatDate(dateStr) {
-      return formatDate(dateStr);
     },
   },
 };
