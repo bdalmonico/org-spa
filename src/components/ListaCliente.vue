@@ -50,116 +50,58 @@
 </template>
 
 <script>
-import axios from 'axios';
+import clienteService from '../services/clienteService';
 
 export default {
   props: {
-    colunas: {
-      type: Array,
-      required: true,
-      default: () => [],
-    },
-    loading: {
-      type: Boolean,
-      default: false,
-    },
-    error: {
-      type: String,
-      default: null,
-    },
+    colunas: { type: Array, required: true, default: () => [] },
+    loading: { type: Boolean, default: false },
+    error: { type: String, default: null },
   },
   data() {
     return {
       clientes: [],
-      clientesComEstado: [], // Clientes com o campo estadoNombre preenchido
+      clientesComEstado: [],
       menuAberto: null,
-      estadosCache: {}, // Cache para armazenar os nomes dos estados
+      estadosCache: {},
     };
   },
-  async mounted() {
-    await this.fetchClientes();
+  watch: {
+    clientes(newClientes) {
+      this.clientesComEstado = [...newClientes];
+      this.fetchEstados();
+    },
   },
   methods: {
-    async fetchClientes() {
-      try {
-        const response = await axios.get('/api/cliente', { params: { size: 10 } });
-        const formattedClientes = [];
-        const clientesData = response.data.page || response.data.content || response.data || [];
-        for (const cliente of Array.isArray(clientesData) ? clientesData : []) {
-          if (!cliente || !cliente.id) continue;
-          const clienteFormatted = {
-            id: cliente.id,
-            nombre: cliente.nombre || 'Sem nome',
-            email: cliente.email || '',
-            nifCif: cliente.nifCif || '',
-            telefone: cliente.telefone || '',
-            estadoId: cliente.estadoId || null,
-          };
-          formattedClientes.push(clienteFormatted);
-        }
-        this.clientes = formattedClientes;
-        this.clientesComEstado = [...this.clientes];
-        await this.fetchEstados();
-      } catch (err) {
-        this.$emit('error', 'Erro ao carregar os clientes: ' + err.message);
-      }
-    },
     async fetchEstados() {
       try {
-        // Extrai os estadoId únicos
-        const estadoIds = [...new Set(this.clientes.map(cliente => cliente.estadoId))].filter(id => id != null);
-        if (estadoIds.length === 0) {
-          console.log('Nenhum estadoId para buscar');
-          return;
-        }
+        const estadoIds = [...new Set(this.clientes.map(c => c.estadoId))].filter(id => id != null);
+        if (!estadoIds.length) return;
 
-        console.log('Buscando estados para IDs:', estadoIds);
-
-        // Faz chamadas paralelas ao endpoint /api/estado/{id}
         const requests = estadoIds.map(id =>
-          axios.get(`/api/estado/${id}`).catch(err => {
-            console.error(`Erro ao buscar estado ${id}:`, err.response?.data || err.message);
-            return { data: { nombre: 'Estado não encontrado' } }; // Fallback em caso de erro
-          })
+          clienteService.getEstadoById(id).catch(() => ({ nombre: 'Estado não encontrado' }))
         );
-        const responses = await Promise.all(requests);
+        const estados = await Promise.all(requests);
+        estadoIds.forEach((id, index) => (this.estadosCache[id] = estados[index].nombre));
 
-        // Atualiza o cache com os nomes dos estados
-        responses.forEach((response, index) => {
-          const estadoId = estadoIds[index];
-          this.estadosCache[estadoId] = response.data.nombre || 'Estado não encontrado';
-          console.log(`Estado ${estadoId}: ${this.estadosCache[estadoId]}`);
-        });
-
-        // Atualiza os clientes com os nomes dos estados
         this.clientesComEstado = this.clientes.map(cliente => ({
           ...cliente,
           estadoNombre: this.estadosCache[cliente.estadoId] || 'Estado não encontrado',
         }));
       } catch (err) {
-        console.error('Erro ao carregar os estados:', err);
         this.$emit('error', 'Erro ao carregar os estados: ' + err.message);
       }
     },
     toggleMenu(clienteId) {
-      console.log('Abrindo menu para cliente com ID:', clienteId);
       this.menuAberto = this.menuAberto === clienteId ? null : clienteId;
     },
     handleEdit(id) {
-      console.log('Emitindo edit-item para ID:', id);
       this.$emit('edit-item', id);
       this.menuAberto = null;
     },
     handleDelete(id) {
       this.$emit('delete-item', id);
       this.menuAberto = null;
-    },
-  },
-  watch: {
-    // Atualiza os estados se os clientes mudarem (ex.: após edição ou recarregamento)
-    clientes(newClientes) {
-      this.clientesComEstado = [...newClientes];
-      this.fetchEstados();
     },
   },
 };

@@ -35,7 +35,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import clienteService from '../services/clienteService';
 import Buscador from '../components/Buscador.vue';
 import ListaCliente from '../components/ListaCliente.vue';
 import CrearClienteModal from '../components/CrearClienteModal.vue';
@@ -43,12 +43,7 @@ import EditarClienteModal from '../components/EditarClienteModal.vue';
 import { formatDate } from '../utils/dateUtils';
 
 export default {
-  components: {
-    Buscador,
-    ListaCliente,
-    CrearClienteModal,
-    EditarClienteModal,
-  },
+  components: { Buscador, ListaCliente, CrearClienteModal, EditarClienteModal },
   data() {
     return {
       loading: false,
@@ -82,10 +77,10 @@ export default {
       this.loading = true;
       this.error = null;
       try {
-        const response = await axios.get('/api/cliente', { params: { ...filtros, size: 10 } });
-        this.$refs.listaCliente.clientes = response.data.page.map(cliente => ({
+        const data = await clienteService.getClientes(filtros);
+        this.$refs.listaCliente.clientes = data.page.map(cliente => ({
           ...cliente,
-          estadoId: cliente.estadoId || null, // Garantir que estadoId seja null se undefined
+          estadoId: cliente.estadoId || null,
         }));
       } catch (err) {
         this.error = 'Erro ao carregar os clientes: ' + err.message;
@@ -97,41 +92,26 @@ export default {
       this.fetchClientes(filtros);
     },
     editarCliente(clienteId) {
-      console.log('Tentando editar cliente com ID recebido:', clienteId);
       const cliente = this.$refs.listaCliente.clientes.find(c => c.id === clienteId);
-      if (!cliente || !cliente.id) {
-        console.error('Cliente não encontrado ou ID inválido:', clienteId);
+      if (!cliente) {
         this.error = 'Erro: Cliente não encontrado.';
         return;
       }
       this.clienteEditando = { ...cliente };
-      console.log('ClienteEditando antes de passar ao modal:', this.clienteEditando);
       this.showEditarClienteModal = true;
-      console.log('Modal de edição aberto para cliente com ID:', this.clienteEditando.id);
     },
     async excluirCliente(clienteId) {
       if (!confirm('Tem certeza de que deseja excluir este cliente?')) return;
 
       this.loading = true;
       this.error = null;
-
       try {
-        const response = await axios.delete(`/api/cliente/${clienteId}`);
-        console.log('Resposta da exclusão:', response.data);
-        this.fetchClientes(); // Recarrega a lista
+        await clienteService.deleteCliente(clienteId);
+        this.fetchClientes();
       } catch (err) {
-        console.error('Erro ao excluir cliente:', err);
-        if (err.response) {
-          if (err.response.status === 404) {
-            this.error = 'Cliente ' + clienteId + ' não encontrado';
-          } else if (err.response.status === 400) {
-            this.error = 'Erro ao excluir cliente: ' + (err.response.data || 'Verifique os dados associados.');
-          } else {
-            this.error = 'Erro ao excluir cliente: ' + (err.response.data || err.message);
-          }
-        } else {
-          this.error = 'Erro ao excluir cliente: ' + err.message;
-        }
+        this.error = err.response?.status === 404
+          ? 'Cliente ' + clienteId + ' não encontrado'
+          : 'Erro ao excluir cliente: ' + (err.response?.data || err.message);
       } finally {
         this.loading = false;
       }

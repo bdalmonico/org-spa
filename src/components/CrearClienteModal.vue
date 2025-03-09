@@ -5,72 +5,27 @@
       <form @submit.prevent="submitForm" class="space-y-4">
         <div>
           <label for="nombre" class="block text-sm font-medium text-gray-700">Nome</label>
-          <input
-            v-model="form.nombre"
-            type="text"
-            id="nombre"
-            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-            placeholder="Digite o nome do cliente"
-            required
-          />
+          <input v-model="form.nombre" type="text" id="nombre" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" placeholder="Digite o nome do cliente" required />
         </div>
         <div>
           <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-          <input
-            v-model="form.email"
-            type="email"
-            id="email"
-            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-            placeholder="Digite o email do cliente"
-            required
-          />
+          <input v-model="form.email" type="email" id="email" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" placeholder="Digite o email do cliente" required />
         </div>
         <div>
           <label for="nifCif" class="block text-sm font-medium text-gray-700">NIF/CIF</label>
-          <input
-            v-model="form.nifCif"
-            type="text"
-            id="nifCif"
-            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-            placeholder="Digite o NIF/CIF do cliente"
-          />
+          <input v-model="form.nifCif" type="text" id="nifCif" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" placeholder="Digite o NIF/CIF do cliente" />
         </div>
         <div>
           <label for="telefone" class="block text-sm font-medium text-gray-700">Telefone</label>
-          <input
-            v-model="form.telefone"
-            type="tel"
-            id="telefone"
-            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-            placeholder="Digite o telefone do cliente"
-          />
+          <input v-model="form.telefone" type="tel" id="telefone" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" placeholder="Digite o telefone do cliente" />
         </div>
         <div>
           <label for="estadoId" class="block text-sm font-medium text-gray-700">Estado ID</label>
-          <input
-            v-model.number="form.estadoId"
-            type="number"
-            id="estadoId"
-            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-            placeholder="Digite o ID do estado"
-          />
+          <input v-model.number="form.estadoId" type="number" id="estadoId" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" placeholder="Digite o ID do estado" />
         </div>
         <div class="flex gap-2">
-          <button
-            type="submit"
-            class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors cursor-pointer"
-            :disabled="loading || !form.nombre || !form.email"
-          >
-            Criar
-          </button>
-          <button
-            type="button"
-            class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors cursor-pointer"
-            @click="closeModal"
-            :disabled="loading"
-          >
-            Cancelar
-          </button>
+          <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors cursor-pointer" :disabled="loading || !form.nombre || !form.email">Criar</button>
+          <button type="button" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors cursor-pointer" @click="closeModal" :disabled="loading">Cancelar</button>
         </div>
       </form>
       <p v-if="error" class="mt-4 text-red-600">{{ error }}</p>
@@ -79,24 +34,13 @@
 </template>
 
 <script>
-import axios from 'axios';
+import clienteService from '../services/clienteService';
 
 export default {
-  props: {
-    isOpen: {
-      type: Boolean,
-      required: true,
-    },
-  },
+  props: { isOpen: { type: Boolean, required: true } },
   data() {
     return {
-      form: {
-        nombre: '',
-        email: '',
-        nifCif: '',
-        telefone: '',
-        estadoId: null,
-      },
+      form: { nombre: '', email: '', nifCif: '', telefone: '', estadoId: null },
       loading: false,
       error: null,
     };
@@ -107,41 +51,16 @@ export default {
         this.error = 'Nome e Email são obrigatórios.';
         return;
       }
-
       this.loading = true;
       this.error = null;
-
       try {
-        const params = new URLSearchParams();
-        params.append('nombre', this.form.nombre.trim());
-        params.append('email', this.form.email.trim());
-        if (this.form.nifCif) params.append('nifCif', this.form.nifCif.trim());
-        if (this.form.telefone) params.append('telefone', this.form.telefone.trim());
-        if (this.form.estadoId !== null) params.append('estadoId', this.form.estadoId.toString());
-
-        console.log('Parâmetros enviados:', params.toString());
-        const response = await axios.post(`/api/cliente?${params.toString()}`);
-
-        console.log('Resposta da criação:', response.data);
+        await clienteService.createCliente(this.form);
         this.$emit('clienteCreated');
         this.closeModal();
       } catch (err) {
-        console.error('Erro ao criar cliente:', err);
-        if (err.response) {
-          const errorMessage = err.response.data || 'Erro desconhecido no servidor';
-          switch (err.response.status) {
-            case 400:
-              this.error = 'Erro nos dados fornecidos: ' + errorMessage;
-              break;
-            case 500:
-              this.error = 'Erro interno do servidor: ' + errorMessage;
-              break;
-            default:
-              this.error = 'Erro ao criar cliente: ' + errorMessage;
-          }
-        } else {
-          this.error = 'Erro ao criar cliente: ' + err.message;
-        }
+        this.error = err.response?.status === 400
+          ? 'Erro nos dados fornecidos: ' + (err.response?.data || err.message)
+          : 'Erro ao criar cliente: ' + (err.response?.data || err.message);
       } finally {
         this.loading = false;
       }
@@ -151,13 +70,7 @@ export default {
       this.resetForm();
     },
     resetForm() {
-      this.form = {
-        nombre: '',
-        email: '',
-        nifCif: '',
-        telefone: '',
-        estadoId: null,
-      };
+      this.form = { nombre: '', email: '', nifCif: '', telefone: '', estadoId: null };
       this.error = null;
     },
   },
