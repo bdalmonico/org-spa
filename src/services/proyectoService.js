@@ -1,4 +1,3 @@
-// src/services/proyectoService.js
 import api from './api';
 
 export default {

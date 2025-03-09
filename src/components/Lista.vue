@@ -79,7 +79,6 @@ export default {
 </script>
 
 <style scoped>
-/* Opcional: Adiciona um cursor de ponteiro para indicar que a linha é clicável */
 tr {
   cursor: pointer;
 }

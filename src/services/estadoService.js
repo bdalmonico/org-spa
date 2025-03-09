@@ -1,4 +1,3 @@
-// src/services/estadoService.js
 import api from './api';
 
 export default {

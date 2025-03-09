@@ -1,4 +1,3 @@
-<!-- Tareas.vue -->
 <template>
   <div class="p-8 bg-gray-100">
     <div class="flex justify-between items-center mb-4">
@@ -117,7 +116,6 @@ export default {
       this.error = null;
 
       try {
-        // Buscar comentários e imputações para exibir na mensagem de confirmação
         const [comentariosResponse, imputacionesResponse] = await Promise.all([
           comentarioTareaService.getComentariosByTareaId(tarefa.id),
           imputacionService.getImputacionesByCriteria({ tareaId: tarefa.id }),

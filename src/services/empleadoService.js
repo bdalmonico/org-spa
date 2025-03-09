@@ -1,4 +1,3 @@
-// src/services/empleadoService.js
 import api from './api';
 
 export default {

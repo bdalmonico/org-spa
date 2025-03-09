@@ -1,36 +1,3 @@
-<!-- <template>
-  <aside class="sidebar">
-    <h2>Menu</h2>
-    <ul>
-      <li><router-link to="/">Home</router-link></li>
-      <li><router-link to="/projetos">Projetos</router-link></li>
-      <li><router-link to="/clientes">Clientes</router-link></li>
-      <li><router-link to="/empleados">Empleados</router-link></li>
-      <li><router-link to="/tareas">Tareas</router-link></li>
-    </ul>
-  </aside>
-</template>
-
-<style scoped>
-.sidebar {
-  width: 200px;
-  background-color: #f4f4f4;
-  padding: 1rem;
-  height: 100%;
-}
-ul {
-  list-style: none;
-  padding: 0;
-}
-li {
-  margin: 10px 0;
-}
-a {
-  text-decoration: none;
-  color: #333;
-}
-</style> -->
-
 <template>
   <aside class="w-64 bg-gray-200 p-4 h-full border-r border-gray-300">
     <h2 class="text-lg font-semibold mb-4 text-gray-800">Menu</h2>

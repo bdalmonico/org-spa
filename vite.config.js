@@ -7,7 +7,7 @@ export default defineConfig({
       "/api": {
         target: "http://localhost:8080", // Aponta para o Tomcat
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, "/org-rest-api/v1") // Corrige o caminho
+        rewrite: (path) => path.replace(/^\/api/, "/org-rest-api/v1") // Corrige el camino
       }
     }
   },

@@ -244,7 +244,7 @@ export default {
 
         this.totalHorasImputadas = totalHorasResponse || 0;
 
-        console.log('Tarefas carregadas:', this.tareas); // Log para verificar as tarefas
+        console.log('Tarefas carregadas:', this.tareas); 
       } catch (err) {
         this.error = 'Erro ao carregar o projeto, tarefas, comentários ou total de horas: ' + (err.response?.data?.message || err.message);
         console.error('Erro:', err);

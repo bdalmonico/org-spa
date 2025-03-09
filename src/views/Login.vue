@@ -63,7 +63,7 @@ export default {
       this.error = null;
 
       try {
-        // Passo 1: Buscar o ID do usuário com base no email
+        //  Buscar o ID do usuário com base no email
         const response = await axios.get('/api/empleado', {
           params: {
             email: this.form.email.trim(),
@@ -108,10 +108,8 @@ export default {
         document.cookie = `userId=${authenticatedEmpleado.id}; path=/; max-age=86400`;
         document.cookie = `userEmail=${authenticatedEmpleado.email}; path=/; max-age=86400`;
 
-        // Passo 4: Emitir evento global para notificar o AppHeader
         this.$root.$emit('login-success', authenticatedEmpleado.email, authenticatedEmpleado.id);
 
-        // Passo 5: Redirecionar para /home
         this.$router.push('/home');
       } catch (err) {
         this.error = 'Erro ao fazer login: ' + (err.response?.data || err.message);

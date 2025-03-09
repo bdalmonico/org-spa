@@ -1,4 +1,3 @@
-// src/services/rolService.js
 import api from './api';
 
 export default {

@@ -84,8 +84,8 @@ export default {
   data() {
     return {
       menuAberto: null,
-      estadosCache: {}, // Cache para armazenar os nomes dos estados
-      itensComEstado: [], // Itens com o campo estadoNombre preenchido
+      estadosCache: {}, 
+      itensComEstado: [], 
     };
   },
   async created() {
@@ -109,7 +109,7 @@ export default {
         const requests = estadoIds.map(id =>
           estadoService.getEstadoById(id).catch(err => {
             console.error(`Erro ao buscar estado ${id}:`, err);
-            return { nombre: 'Estado não encontrado' }; // Fallback em caso de erro
+            return { nombre: 'Estado não encontrado' }; 
           })
         );
         const responses = await Promise.all(requests);

@@ -7,7 +7,6 @@
       <img src="../assets/user-icon.png" alt="Usuário" class="w-6 h-6 rounded-full object-cover" />
       <span class="text-sm">{{ empleadoNombre || 'Carregando...' }}</span>
       <span class="text-lg cursor-pointer hover:text-gray-300" @click="toggleSettingsMenu">{{ settingsIcon }}</span>
-      <!-- Menu de Configurações -->
       <div v-if="showSettingsMenu" class="absolute right-0 top-full mt-2 bg-white text-black border border-gray-200 rounded-md shadow-lg z-10">
         <button
           class="w-full px-4 py-2 text-left text-red-500 hover:bg-gray-100 cursor-pointer"
@@ -39,7 +38,6 @@ export default {
   },
   watch: {
     userEmail(newEmail) {
-      // Quando userEmail mudar (login/logout), buscar o nome novamente
       this.fetchEmpleadoNombre();
     },
   },
@@ -69,17 +67,17 @@ export default {
         if (empleados && empleados.length > 0) {
           this.empleadoNombre = `${empleados[0].nombre} ${empleados[0].apellido || ''}`.trim() || this.userEmail;
         } else {
-          this.empleadoNombre = this.userEmail; // Fallback para o email se o nome não for encontrado
+          this.empleadoNombre = this.userEmail; 
         }
       } catch (err) {
         console.error('Erro ao buscar nome do empregado:', err);
-        this.empleadoNombre = this.userEmail; // Fallback
+        this.empleadoNombre = this.userEmail;k
       }
     },
     logout() {
       document.cookie = 'userId=; path=/; max-age=0';
       document.cookie = 'userEmail=; path=/; max-age=0';
-      this.userEmail = ''; // Atualiza o userEmail para acionar o watch
+      this.userEmail = ''; 
       this.userId = '';
       this.$router.push('/login');
       this.showSettingsMenu = false;

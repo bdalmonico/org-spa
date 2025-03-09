@@ -1,4 +1,3 @@
-// src/types/cliente.js
 export const ClienteDTO = {
     id: Number,
     nombre: String,

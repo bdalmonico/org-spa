@@ -196,10 +196,10 @@ export default {
       }
     },
     handleProyectoClicked(id) {
-      this.$router.push(`/projetos/${id}`); // Corrigido o erro de sintaxe nas aspas
+      this.$router.push(`/projetos/${id}`); 
     },
     handleTareaClicked(id) {
-      this.$router.push(`/tareas/${id}`); // Corrigido o erro de sintaxe nas aspas
+      this.$router.push(`/tareas/${id}`); 
     },
     formatDate(dateStr) {
       return formatDate(dateStr);
