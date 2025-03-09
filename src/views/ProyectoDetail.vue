@@ -147,7 +147,11 @@
 </template>
 
 <script>
-import axios from 'axios';
+import proyectoService from '../services/proyectoService';
+import tareaService from '../services/tareaService';
+import comentarioProyectoService from '../services/comentarioProyectoService';
+import imputacionService from '../services/imputacionService';
+import Cookies from 'js-cookie';
 import Lista from '../components/Lista.vue';
 import EditarProyectoModal from '../components/EditarProyectoModal.vue';
 import { formatDate } from '../utils/dateUtils';
@@ -170,37 +174,51 @@ export default {
       loading: false,
       error: null,
       showEditarProyectoModal: false,
+      empleadoId: null,
     };
   },
   mounted() {
+    this.getUserIdFromCookie();
     this.fetchProyecto();
   },
   methods: {
+    getUserIdFromCookie() {
+      const userId = Cookies.get('userId');
+      if (userId) {
+        this.empleadoId = parseInt(userId, 10);
+        console.log('Empleado ID recuperado do cookie:', this.empleadoId);
+      } else {
+        this.error = 'Usuário não autenticado. Faça login para continuar.';
+        console.error('Cookie userId não encontrado.');
+      }
+    },
     async fetchProyecto() {
       this.loading = true;
       this.error = null;
       const id = this.$route.params.id;
       try {
         const [proyectoResponse, tareasResponse, comentariosResponse, totalHorasResponse] = await Promise.all([
-          axios.get(`/api/proyecto/${id}`),
-          axios.get('/api/tarea'),
-          axios.get(`/api/comentarioproyecto/proyecto/${id}`),
-          axios.get('/api/imputacion/search/total', { params: { proyectoId: id } }),
+          proyectoService.getProyectoById(id),
+          tareaService.getTareas({}), // Busca todas as tarefas sem filtro
+          comentarioProyectoService.getComentariosByProyectoId(id),
+          imputacionService.getTotalHorasImputadas({ proyectoId: id }),
         ]);
+
         this.proyecto = {
-          id: proyectoResponse.data.id,
-          nombre: proyectoResponse.data.nombre,
-          descripcion: proyectoResponse.data.descripcion,
-          clienteNombre: proyectoResponse.data.clienteNombre,
-          estadoId: proyectoResponse.data.estadoId,
-          importe: proyectoResponse.data.importe,
-          clienteId: proyectoResponse.data.clienteId,
-          fechaEstimadaInicio: formatDate(proyectoResponse.data.fechaEstimadaInicio),
-          fechaEstimadaFin: formatDate(proyectoResponse.data.fechaEstimadaFin),
-          fechaRealInicio: formatDate(proyectoResponse.data.fechaRealInicio),
-          fechaRealFin: formatDate(proyectoResponse.data.fechaRealFin),
+          id: proyectoResponse.id,
+          nombre: proyectoResponse.nombre,
+          descripcion: proyectoResponse.descripcion,
+          clienteNombre: proyectoResponse.clienteNombre,
+          estadoId: proyectoResponse.estadoId,
+          importe: proyectoResponse.importe,
+          clienteId: proyectoResponse.clienteId,
+          fechaEstimadaInicio: formatDate(proyectoResponse.fechaEstimadaInicio),
+          fechaEstimadaFin: formatDate(proyectoResponse.fechaEstimadaFin),
+          fechaRealInicio: formatDate(proyectoResponse.fechaRealInicio),
+          fechaRealFin: formatDate(proyectoResponse.fechaRealFin),
         };
-        this.tareas = tareasResponse.data.page
+
+        this.tareas = tareasResponse.page
           .filter(tarea => tarea.proyectoId === Number(id))
           .map(tarea => ({
             id: tarea.id,
@@ -213,7 +231,8 @@ export default {
             fechaRealInicio: formatDate(tarea.fechaRealInicio),
             fechaRealFin: formatDate(tarea.fechaRealFin),
           }));
-        this.comentarios = comentariosResponse.data.page.map(comentario => ({
+
+        this.comentarios = comentariosResponse.page.map(comentario => ({
           id: comentario.id,
           comentario: comentario.comentario,
           empleadoId: comentario.empleadoId,
@@ -222,34 +241,37 @@ export default {
           orderBy: comentario.orderBy,
           proyectoId: comentario.proyectoId,
         }));
-        this.totalHorasImputadas = totalHorasResponse.data || 0;
+
+        this.totalHorasImputadas = totalHorasResponse || 0;
+
+        console.log('Tarefas carregadas:', this.tareas); // Log para verificar as tarefas
       } catch (err) {
-        this.error = 'Erro ao carregar o projeto, tarefas, comentários ou total de horas: ' + err.message;
+        this.error = 'Erro ao carregar o projeto, tarefas, comentários ou total de horas: ' + (err.response?.data?.message || err.message);
+        console.error('Erro:', err);
       } finally {
         this.loading = false;
       }
     },
     async criarComentario() {
       if (!this.novoComentario.trim()) return;
+      if (!this.empleadoId) {
+        this.error = 'Usuário não autenticado. Faça login para comentar.';
+        return;
+      }
 
       this.loading = true;
       this.error = null;
-      const id = this.proyecto.id;
-      const empleadoId = 1; // Substitua por um valor dinâmico, como o userId do cookie
-      const fechaHora = new Date().toISOString();
+      const comentarioData = {
+        comentario: this.novoComentario,
+        empleadoId: this.empleadoId,
+        fechaHora: new Date().toISOString().split('T')[0],
+        proyectoId: this.proyecto.id,
+      };
 
       try {
-        await axios.post('/api/comentarioproyecto', null, {
-          params: {
-            comentario: this.novoComentario,
-            empleadoId: empleadoId,
-            fechaHora: fechaHora,
-            proyectoId: id,
-          },
-        });
-
-        const response = await axios.get(`/api/comentarioproyecto/proyecto/${id}`);
-        this.comentarios = response.data.page.map(comentario => ({
+        await comentarioProyectoService.createComentario(comentarioData);
+        const response = await comentarioProyectoService.getComentariosByProyectoId(this.proyecto.id);
+        this.comentarios = response.page.map(comentario => ({
           id: comentario.id,
           comentario: comentario.comentario,
           empleadoId: comentario.empleadoId,
@@ -260,7 +282,8 @@ export default {
         }));
         this.novoComentario = '';
       } catch (err) {
-        this.error = 'Erro ao criar comentário: ' + err.message;
+        this.error = 'Erro ao criar comentário: ' + (err.response?.data?.message || err.message);
+        console.error('Erro:', err);
       } finally {
         this.loading = false;
       }
@@ -268,49 +291,44 @@ export default {
     toggleMenu(comentarioId) {
       this.menuAberto = this.menuAberto === comentarioId ? null : comentarioId;
     },
-    async editarComentario(comentario) {
+    editarComentario(comentario) {
       this.editandoComentario = comentario.id;
       this.comentarioEditado = comentario.comentario;
       this.menuAberto = null;
     },
     async salvarEdicao() {
       if (!this.comentarioEditado.trim() || !this.editandoComentario) return;
+      if (!this.empleadoId) {
+        this.error = 'Usuário não autenticado. Faça login para editar comentários.';
+        return;
+      }
 
       this.loading = true;
       this.error = null;
-      const id = this.editandoComentario;
-      const empleadoId = 1; // Substitua por um valor dinâmico, como o userId do cookie
-      const fechaHora = new Date().toISOString().split('T')[0];
+      const comentarioData = {
+        id: this.editandoComentario,
+        comentario: this.comentarioEditado,
+        empleadoId: this.empleadoId,
+        fechaHora: new Date().toISOString().split('T')[0],
+        proyectoId: this.proyecto.id,
+      };
 
       try {
-        const response = await axios.put('/api/comentarioproyecto', null, {
-          params: {
-            id: id,
-            comentario: this.comentarioEditado,
-            empleadoId: empleadoId,
-            fechaHora: fechaHora,
-            proyectoId: this.proyecto.id,
-          },
-        });
-
-        if (response.status === 200) {
-          const updatedResponse = await axios.get(`/api/comentarioproyecto/proyecto/${this.proyecto.id}`);
-          this.comentarios = updatedResponse.data.page.map(comentario => ({
-            id: comentario.id,
-            comentario: comentario.comentario,
-            empleadoId: comentario.empleadoId,
-            fechaHora: formatDate(comentario.fechaHora),
-            ascDesc: comentario.ascDesc,
-            orderBy: comentario.orderBy,
-            proyectoId: comentario.proyectoId,
-          }));
-          this.cancelarEdicao();
-        } else {
-          this.error = 'Erro inesperado ao atualizar o comentário: ' + response.data;
-        }
+        await comentarioProyectoService.updateComentario(comentarioData);
+        const response = await comentarioProyectoService.getComentariosByProyectoId(this.proyecto.id);
+        this.comentarios = response.page.map(comentario => ({
+          id: comentario.id,
+          comentario: comentario.comentario,
+          empleadoId: comentario.empleadoId,
+          fechaHora: formatDate(comentario.fechaHora),
+          ascDesc: comentario.ascDesc,
+          orderBy: comentario.orderBy,
+          proyectoId: comentario.proyectoId,
+        }));
+        this.cancelarEdicao();
       } catch (err) {
         this.error = 'Erro ao editar comentário: ' + (err.response?.data?.message || err.message);
-        console.error('Detalhes do erro:', err.response || err);
+        console.error('Erro:', err);
       } finally {
         this.loading = false;
       }
@@ -326,10 +344,9 @@ export default {
       this.error = null;
 
       try {
-        await axios.delete(`/api/comentarioproyecto/${comentarioId}`);
-
-        const response = await axios.get(`/api/comentarioproyecto/proyecto/${this.proyecto.id}`);
-        this.comentarios = response.data.page.map(comentario => ({
+        await comentarioProyectoService.deleteComentario(comentarioId);
+        const response = await comentarioProyectoService.getComentariosByProyectoId(this.proyecto.id);
+        this.comentarios = response.page.map(comentario => ({
           id: comentario.id,
           comentario: comentario.comentario,
           empleadoId: comentario.empleadoId,
@@ -340,19 +357,18 @@ export default {
         }));
         this.menuAberto = null;
       } catch (err) {
-        this.error = 'Erro ao excluir comentário: ' + err.message;
+        this.error = 'Erro ao excluir comentário: ' + (err.response?.data?.message || err.message);
+        console.error('Erro:', err);
       } finally {
         this.loading = false;
       }
     },
     handleTareaClicked(tareaId) {
+      console.log('Tarefa clicada, redirecionando para /tareas/', tareaId); // Log para depuração
       this.$router.push(`/tareas/${tareaId}`);
     },
     verEmpleado(empleadoId) {
       this.$router.push(`/empleados/${empleadoId}`);
-    },
-    async editarProyecto() {
-      this.showEditarProyectoModal = true;
     },
     async borrarProyecto() {
       if (!confirm('Tem certeza de que deseja excluir este projeto?')) return;
@@ -361,14 +377,15 @@ export default {
       this.error = null;
 
       try {
-        await axios.delete(`/api/proyecto/del/${this.proyecto.id}`);
+        await proyectoService.deleteProyecto(this.proyecto.id);
         this.$router.push('/projetos');
       } catch (err) {
         if (err.response && err.response.status === 400) {
           this.error = 'Projeto ' + this.proyecto.id + ' não encontrado';
         } else {
-          this.error = 'Erro ao excluir projeto: ' + (err.message || 'Tente novamente.');
+          this.error = 'Erro ao excluir projeto: ' + (err.response?.data?.message || err.message);
         }
+        console.error('Erro:', err);
       } finally {
         this.loading = false;
       }
