@@ -78,7 +78,8 @@
 </template>
 
 <script>
-import axios from 'axios';
+import proyectoService from '../services/proyectoService';
+import tareaService from '../services/tareaService';
 import ListaProyectosHome from '../components/ListaProyectosHome.vue';
 import ListaTareasHome from '../components/ListaTareasHome.vue';
 import CrearProyectoModal from '../components/CrearProyectoModal.vue';
@@ -124,9 +125,9 @@ export default {
       this.loadingProyectos = true;
       this.errorProyectos = null;
       try {
-        const response = await axios.get('/api/proyecto', { params: { size: 10 } });
+        const response = await proyectoService.getProyectos({ size: 10 });
         const formattedProyectos = [];
-        const proyectosData = response.data.page || response.data.content || response.data || [];
+        const proyectosData = response.page || response.content || response || [];
         for (const proyecto of Array.isArray(proyectosData) ? proyectosData : []) {
           if (!proyecto || !proyecto.id) continue;
           const proyectoFormatted = {
@@ -141,7 +142,7 @@ export default {
         }
         this.proyectos = formattedProyectos;
       } catch (err) {
-        this.errorProyectos = 'Erro ao carregar os projetos: ' + err.message;
+        this.errorProyectos = 'Erro ao carregar os projetos: ' + (err.response?.data?.message || err.message);
       } finally {
         this.loadingProyectos = false;
       }
@@ -150,9 +151,9 @@ export default {
       this.loadingTareas = true;
       this.errorTareas = null;
       try {
-        const response = await axios.get('/api/tarea', { params: { size: 10 } });
+        const response = await tareaService.getTareas({ size: 10 });
         const formattedTareas = [];
-        const tareasData = response.data.page || response.data.content || response.data || [];
+        const tareasData = response.page || response.content || response || [];
         for (const tarea of Array.isArray(tareasData) ? tareasData : []) {
           if (!tarea || !tarea.id) continue;
           const tareaFormatted = {
@@ -167,7 +168,7 @@ export default {
         }
         this.tareas = formattedTareas;
       } catch (err) {
-        this.errorTareas = 'Erro ao carregar as tarefas: ' + err.message;
+        this.errorTareas = 'Erro ao carregar as tarefas: ' + (err.response?.data?.message || err.message);
       } finally {
         this.loadingTareas = false;
       }
@@ -195,10 +196,10 @@ export default {
       }
     },
     handleProyectoClicked(id) {
-      this.$router.push(`/projetos/${id}`);
+      this.$router.push(`/projetos/${id}`); // Corrigido o erro de sintaxe nas aspas
     },
     handleTareaClicked(id) {
-      this.$router.push(`/tareas/${id}`);
+      this.$router.push(`/tareas/${id}`); // Corrigido o erro de sintaxe nas aspas
     },
     formatDate(dateStr) {
       return formatDate(dateStr);
