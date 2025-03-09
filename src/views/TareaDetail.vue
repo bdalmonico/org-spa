@@ -266,16 +266,21 @@ export default {
       this.showEditarTareaModal = true;
     },
     async borrarTarea() {
-      if (!confirm('Tem certeza de que deseja excluir esta tarefa?')) return;
+      const comentarioCount = this.comentarios.length;
+      const imputacionCount = this.imputaciones.length;
+      const confirmMessage = `Tem certeza de que deseja excluir esta tarefa?${comentarioCount > 0 || imputacionCount > 0 ? ` Isso excluirá ${comentarioCount} comentário(s) e ${imputacionCount} imputação(ões) associada(s).` : ''}`;
+      if (!confirm(confirmMessage)) return;
 
       this.loading = true;
       this.error = null;
 
       try {
         await tareaService.deleteTarea(this.tarea.id);
+        console.log(`Tarefa ${this.tarea.id} excluída com sucesso`);
         this.$router.push('/tareas');
       } catch (err) {
-        this.error = 'Erro ao excluir tarefa: ' + (err.response?.data?.message || err.message);
+        this.error = 'Erro ao excluir tarefa: ' + (err.message || 'Erro desconhecido');
+        console.error('Erro ao excluir tarefa:', err);
       } finally {
         this.loading = false;
       }

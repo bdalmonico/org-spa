@@ -1,3 +1,4 @@
+<!-- Tareas.vue -->
 <template>
   <div class="p-8 bg-gray-100">
     <div class="flex justify-between items-center mb-4">
@@ -37,6 +38,8 @@
 
 <script>
 import tareaService from '../services/tareaService';
+import comentarioTareaService from '../services/comentarioTareaService';
+import imputacionService from '../services/imputacionService';
 import Buscador from '../components/Buscador.vue';
 import ListaTareas from '../components/ListaTareas.vue';
 import CrearTareaModal from '../components/CrearTareaModal.vue';
@@ -109,18 +112,27 @@ export default {
       this.tareaEditando = { ...tarea };
       this.showEditarTareaModal = true;
     },
-    async excluirTarea(tarea) {
-      if (!confirm('Tem certeza de que deseja excluir esta tarefa?')) return;
-
+    async excluirTarea(tarefa) {
       this.loading = true;
       this.error = null;
 
       try {
-        console.log('Excluindo tarefa com ID:', tarea.id);
-        await tareaService.deleteTarea(tarea.id);
+        // Buscar comentários e imputações para exibir na mensagem de confirmação
+        const [comentariosResponse, imputacionesResponse] = await Promise.all([
+          comentarioTareaService.getComentariosByTareaId(tarefa.id),
+          imputacionService.getImputacionesByCriteria({ tareaId: tarefa.id }),
+        ]);
+        const comentarioCount = (comentariosResponse.page || []).length;
+        const imputacionCount = (imputacionesResponse.page || []).length;
+
+        const confirmMessage = `Tem certeza de que deseja excluir a tarefa "${tarefa.nombre}"?${comentarioCount > 0 || imputacionCount > 0 ? ` Isso excluirá ${comentarioCount} comentário(s) e ${imputacionCount} imputação(ões) associada(s).` : ''}`;
+        if (!confirm(confirmMessage)) return;
+
+        console.log('Excluindo tarefa com ID:', tarefa.id);
+        await tareaService.deleteTarea(tarefa.id);
         await this.fetchTareas({});
       } catch (err) {
-        this.error = 'Erro ao excluir tarefa: ' + (err.response?.data?.message || err.message);
+        this.error = 'Erro ao excluir tarefa: ' + (err.message || 'Erro desconhecido');
         console.error('Erro ao excluir tarefa:', err);
       } finally {
         this.loading = false;
