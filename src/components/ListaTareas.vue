@@ -59,7 +59,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import estadoService from '../services/estadoService';
 
 export default {
   props: {
@@ -98,7 +98,6 @@ export default {
     },
     async fetchEstados() {
       try {
-        // Extrai os estadoId únicos
         const estadoIds = [...new Set(this.itens.map(item => item.estadoId))].filter(id => id != null);
         if (estadoIds.length === 0) {
           console.log('Nenhum estadoId para buscar');
@@ -107,23 +106,20 @@ export default {
 
         console.log('Buscando estados para IDs:', estadoIds);
 
-        // Faz chamadas paralelas ao endpoint /api/estado/{id}
         const requests = estadoIds.map(id =>
-          axios.get(`/api/estado/${id}`).catch(err => {
-            console.error(`Erro ao buscar estado ${id}:`, err.response?.data || err.message);
-            return { data: { nombre: 'Estado não encontrado' } }; // Fallback em caso de erro
+          estadoService.getEstadoById(id).catch(err => {
+            console.error(`Erro ao buscar estado ${id}:`, err);
+            return { nombre: 'Estado não encontrado' }; // Fallback em caso de erro
           })
         );
         const responses = await Promise.all(requests);
 
-        // Atualiza o cache com os nomes dos estados
-        responses.forEach((response, index) => {
+        responses.forEach((estado, index) => {
           const estadoId = estadoIds[index];
-          this.estadosCache[estadoId] = response.data.nombre || 'Estado não encontrado';
+          this.estadosCache[estadoId] = estado.nombre || 'Estado não encontrado';
           console.log(`Estado ${estadoId}: ${this.estadosCache[estadoId]}`);
         });
 
-        // Atualiza os itens com os nomes dos estados
         this.itensComEstado = this.itens.map(item => ({
           ...item,
           estadoNombre: this.estadosCache[item.estadoId] || 'Estado não encontrado',
@@ -134,12 +130,10 @@ export default {
       }
     },
     verProyecto(proyectoId) {
-      // Redireciona para a página de detalhes do projeto
       this.$router.push(`/projetos/${proyectoId}`);
     },
   },
   watch: {
-    // Atualiza os estados se os itens mudarem (ex.: após edição ou recarregamento)
     itens(newItens) {
       this.itensComEstado = [...newItens];
       this.fetchEstados();

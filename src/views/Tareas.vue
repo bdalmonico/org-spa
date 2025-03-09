@@ -36,7 +36,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import tareaService from '../services/tareaService';
 import Buscador from '../components/Buscador.vue';
 import ListaTareas from '../components/ListaTareas.vue';
 import CrearTareaModal from '../components/CrearTareaModal.vue';
@@ -67,8 +67,8 @@ export default {
         { key: 'id', label: 'ID' },
         { key: 'nombre', label: 'Título' },
         { key: 'descripcion', label: 'Descrição' },
-        { key: 'estadoId', label: 'Estado ID' },
-        { key: 'proyectoId', label: 'Projeto ID' },
+        { key: 'estadoId', label: 'Estado' },
+        { key: 'proyectoId', label: 'Projeto' },
         { key: 'fechaEstimadaInicio', label: 'Data Estimada Início' },
         { key: 'actions', label: '' },
       ],
@@ -83,8 +83,8 @@ export default {
       this.error = null;
       try {
         console.log('Buscando tarefas com filtros:', filtros);
-        const response = await axios.get('/api/tarea', { params: filtros });
-        this.tareas = response.data.page.map(tarea => ({
+        const response = await tareaService.getTareas(filtros);
+        this.tareas = response.page.map(tarea => ({
           ...tarea,
           fechaEstimadaInicio: formatDate(tarea.fechaEstimadaInicio),
           fechaEstimadaFin: formatDate(tarea.fechaEstimadaFin),
@@ -92,7 +92,7 @@ export default {
           fechaRealFin: formatDate(tarea.fechaRealFin),
         }));
       } catch (err) {
-        this.error = 'Erro ao carregar as tarefas: ' + err.message;
+        this.error = 'Erro ao carregar as tarefas: ' + (err.response?.data?.message || err.message);
         console.error('Erro ao buscar tarefas:', err);
       } finally {
         this.loading = false;
@@ -117,21 +117,14 @@ export default {
 
       try {
         console.log('Excluindo tarefa com ID:', tarea.id);
-        await axios.delete(`/api/tarea/${tarea.id}`);
+        await tareaService.deleteTarea(tarea.id);
         await this.fetchTareas({});
       } catch (err) {
-        if (err.response && err.response.status === 404) {
-          this.error = 'Tarefa ' + tarea.id + ' não encontrada';
-        } else {
-          this.error = 'Erro ao excluir tarefa: ' + (err.response?.data?.message || err.message);
-        }
+        this.error = 'Erro ao excluir tarefa: ' + (err.response?.data?.message || err.message);
         console.error('Erro ao excluir tarefa:', err);
       } finally {
         this.loading = false;
       }
-    },
-    formatDate(dateStr) {
-      return formatDate(dateStr);
     },
   },
 };

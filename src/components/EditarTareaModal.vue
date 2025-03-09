@@ -119,7 +119,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import tareaService from '../services/tareaService';
 
 export default {
   props: {
@@ -151,13 +151,9 @@ export default {
   },
   created() {
     if (this.tarea && this.tarea.id) {
-      this.form.id = this.tarea.id;
-      this.form.nombre = this.tarea.nombre || '';
-      this.form.descripcion = this.tarea.descripcion || '';
-      this.form.estadoId = this.tarea.estadoId || null;
-      this.form.proyectoId = this.tarea.proyectoId || null;
-      this.form.fechaEstimadaInicio = this.tarea.fechaEstimadaInicio ? this.formatFromIso(this.tarea.fechaEstimadaInicio) : '';
-      this.form.fechaEstimadaFin = this.tarea.fechaEstimadaFin ? this.formatFromIso(this.tarea.fechaEstimadaFin) : '';
+      this.form = { ...this.tarea };
+      this.form.fechaEstimadaInicio = this.formatFromIso(this.tarea.fechaEstimadaInicio);
+      this.form.fechaEstimadaFin = this.formatFromIso(this.tarea.fechaEstimadaFin);
       this.form.fechaRealInicio = this.tarea.fechaRealInicio ? this.formatFromIso(this.tarea.fechaRealInicio) : '';
       this.form.fechaRealFin = this.tarea.fechaRealFin ? this.formatFromIso(this.tarea.fechaRealFin) : '';
       console.log('Modal aberto com ID:', this.form.id);
@@ -177,44 +173,14 @@ export default {
       this.error = null;
 
       try {
-        const params = new URLSearchParams();
-        params.append('id', this.form.id.toString());
-        params.append('nombre', this.form.nombre.trim());
-        params.append('descripcion', this.form.descripcion.trim());
-        params.append('estadoId', this.form.estadoId.toString());
-        params.append('proyectoId', this.form.proyectoId.toString());
-        params.append('fechaEstimadaInicio', this.formatDate(this.form.fechaEstimadaInicio));
-        params.append('fechaEstimadaFin', this.formatDate(this.form.fechaEstimadaFin));
-        if (this.form.fechaRealInicio) params.append('fechaRealInicio', this.formatDate(this.form.fechaRealInicio));
-        if (this.form.fechaRealFin) params.append('fechaRealFin', this.formatDate(this.form.fechaRealFin));
-
-        console.log('Parâmetros enviados:', params.toString());
-
-        const response = await axios.put(`/api/tarea/${this.form.id}?${params.toString()}`);
-
-        console.log('Resposta da atualização:', response.data);
+        const tareaData = { ...this.form };
+        console.log('Atualizando tarefa com dados:', tareaData);
+        await tareaService.updateTarea(tareaData);
         this.$emit('taskUpdated');
         this.closeModal();
       } catch (err) {
         console.error('Erro ao atualizar tarefa:', err);
-        if (err.response) {
-          const errorMessage = err.response.data || 'Erro desconhecido no servidor';
-          switch (err.response.status) {
-            case 404:
-              this.error = 'Tarefa não encontrada.';
-              break;
-            case 400:
-              this.error = 'Erro nos dados fornecidos: ' + errorMessage;
-              break;
-            case 500:
-              this.error = 'Erro interno do servidor: ' + errorMessage;
-              break;
-            default:
-              this.error = 'Erro ao editar tarefa: ' + errorMessage;
-          }
-        } else {
-          this.error = 'Erro ao editar tarefa: ' + err.message;
-        }
+        this.error = 'Erro ao editar tarefa: ' + (err.response?.data?.message || err.message);
       } finally {
         this.loading = false;
       }
@@ -236,10 +202,6 @@ export default {
         fechaRealFin: '',
       };
       this.error = null;
-    },
-    formatDate(dateStr) {
-      if (!dateStr) return '';
-      return dateStr; // yyyy-MM-dd
     },
     formatFromIso(dateStr) {
       if (!dateStr) return '';

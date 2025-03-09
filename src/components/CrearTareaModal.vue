@@ -109,7 +109,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import tareaService from '../services/tareaService';
 
 export default {
   props: {
@@ -145,40 +145,14 @@ export default {
       this.error = null;
 
       try {
-        const params = new URLSearchParams();
-        params.append('nombre', this.form.nombre.trim());
-        params.append('descripcion', this.form.descripcion.trim());
-        params.append('estadoId', this.form.estadoId.toString());
-        params.append('proyectoId', this.form.proyectoId.toString());
-        params.append('fechaEstimadaInicio', this.formatDate(this.form.fechaEstimadaInicio));
-        params.append('fechaEstimadaFin', this.formatDate(this.form.fechaEstimadaFin));
-        if (this.form.fechaRealInicio) params.append('fechaRealInicio', this.formatDate(this.form.fechaRealInicio));
-        if (this.form.fechaRealFin) params.append('fechaRealFin', this.formatDate(this.form.fechaRealFin));
-
-        console.log('Parâmetros enviados:', params.toString());
-
-        const response = await axios.post(`/api/tarea/crear?${params.toString()}`);
-
-        console.log('Resposta da criação:', response.data);
+        const tareaData = { ...this.form };
+        console.log('Criando tarefa com dados:', tareaData);
+        await tareaService.createTarea(tareaData);
         this.$emit('taskCreated');
         this.closeModal();
       } catch (err) {
         console.error('Erro ao criar tarefa:', err);
-        if (err.response) {
-          const errorMessage = err.response.data || 'Erro desconhecido no servidor';
-          switch (err.response.status) {
-            case 400:
-              this.error = 'Erro nos dados fornecidos: ' + errorMessage;
-              break;
-            case 500:
-              this.error = 'Erro interno do servidor: ' + errorMessage;
-              break;
-            default:
-              this.error = 'Erro ao criar tarefa: ' + errorMessage;
-          }
-        } else {
-          this.error = 'Erro ao criar tarefa: ' + err.message;
-        }
+        this.error = 'Erro ao criar tarefa: ' + (err.response?.data?.message || err.message);
       } finally {
         this.loading = false;
       }
@@ -199,10 +173,6 @@ export default {
         fechaRealFin: '',
       };
       this.error = null;
-    },
-    formatDate(dateStr) {
-      if (!dateStr) return '';
-      return dateStr; // A API espera yyyy-MM-dd, que já é o formato padrão do input type="date"
     },
   },
 };
