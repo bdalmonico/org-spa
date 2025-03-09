@@ -48,37 +48,23 @@
 </template>
 
 <script>
-import axios from 'axios';
+import empleadoService from '../services/empleadoService';
 
 export default {
   props: {
-    empleados: {
-      type: Array,
-      required: true,
-    },
-    colunas: {
-      type: Array,
-      required: true,
-      default: () => [],
-    },
-    loading: {
-      type: Boolean,
-      default: false,
-    },
-    error: {
-      type: String,
-      default: null,
-    },
+    empleados: { type: Array, required: true },
+    colunas: { type: Array, required: true, default: () => [] },
+    loading: { type: Boolean, default: false },
+    error: { type: String, default: null },
   },
   data() {
     return {
       menuAberto: null,
-      empleadosConRol: [], // Empregados com o campo rolNombre preenchido
-      rolesCache: {}, // Cache para armazenar os nomes dos papéis
+      empleadosConRol: [],
+      rolesCache: {},
     };
   },
   created() {
-    console.log('ListaEmpleados criado, empleados recebidos:', this.empleados);
     this.empleadosConRol = [...this.empleados];
     this.fetchRoles();
   },
@@ -88,57 +74,30 @@ export default {
     },
     async fetchRoles() {
       try {
-        // Extrai os rolId únicos
-        const rolIds = [...new Set(this.empleados.map(empleado => empleado.rolId))].filter(id => id != null);
-        if (rolIds.length === 0) {
-          console.log('Nenhum rolId encontrado nos empregados:', this.empleados);
-          this.empleadosConRol = this.empleados.map(empleado => ({
-            ...empleado,
-            rolNombre: 'Papel não definido',
-          }));
+        const rolIds = [...new Set(this.empleados.map(e => e.rolId))].filter(id => id != null);
+        if (!rolIds.length) {
+          this.empleadosConRol = this.empleados.map(e => ({ ...e, rolNombre: 'Papel não definido' }));
           return;
         }
 
-        console.log('Buscando papéis para rolIds:', rolIds);
-
-        // Faz chamadas paralelas ao endpoint /api/rol/{id}
         const requests = rolIds.map(id =>
-          axios.get(`/api/rol/${id}`).catch(err => {
-            console.error(`Erro ao buscar papel ${id}:`, err.response?.status, err.response?.data || err.message);
-            return { data: { nombre: 'Papel não encontrado' } }; // Fallback em caso de erro
-          })
+          empleadoService.getRolById(id).catch(() => ({ nombre: 'Papel não encontrado' }))
         );
-        const responses = await Promise.all(requests);
+        const roles = await Promise.all(requests);
+        rolIds.forEach((id, index) => (this.rolesCache[id] = roles[index].nombre));
 
-        // Atualiza o cache com os nomes dos papéis
-        responses.forEach((response, index) => {
-          const rolId = rolIds[index];
-          console.log(`Resposta para rolId ${rolId}:`, response.data);
-          this.rolesCache[rolId] = response.data.nombre || 'Papel não encontrado';
-          console.log(`Papel ${rolId}: ${this.rolesCache[rolId]}`);
-        });
-
-        // Atualiza os empregados com os nomes dos papéis
         this.empleadosConRol = this.empleados.map(empleado => ({
           ...empleado,
           rolNombre: this.rolesCache[empleado.rolId] || 'Papel não definido',
         }));
-        console.log('Empregados com rolNombre:', this.empleadosConRol);
       } catch (err) {
-        console.error('Erro ao carregar os papéis:', err);
         this.$emit('update:error', 'Erro ao carregar os papéis: ' + err.message);
-        // Fallback para evitar que a tabela fique em branco
-        this.empleadosConRol = this.empleados.map(empleado => ({
-          ...empleado,
-          rolNombre: 'Erro ao buscar papel',
-        }));
+        this.empleadosConRol = this.empleados.map(e => ({ ...e, rolNombre: 'Erro ao buscar papel' }));
       }
     },
   },
   watch: {
-    // Atualiza os papéis se os empregados mudarem
     empleados(newEmpleados) {
-      console.log('Watch: empleados atualizados:', newEmpleados);
       this.empleadosConRol = [...newEmpleados];
       this.fetchRoles();
     },

@@ -28,17 +28,13 @@
 </template>
 
 <script>
-import axios from 'axios';
+import empleadoService from '../services/empleadoService';
 import Buscador from '../components/Buscador.vue';
 import ListaEmpleados from '../components/ListaEmpleados.vue';
 import CrearEmpleadoModal from '../components/CrearEmpleadoModal.vue';
 
 export default {
-  components: {
-    Buscador,
-    ListaEmpleados,
-    CrearEmpleadoModal,
-  },
+  components: { Buscador, ListaEmpleados, CrearEmpleadoModal },
   data() {
     return {
       empleados: [],
@@ -69,12 +65,11 @@ export default {
       this.loading = true;
       this.error = null;
       try {
-        const response = await axios.get('/api/empleado', { params: filtros });
-        const formattedEmpleados = response.data.page.map(empleado => ({
+        const data = await empleadoService.getEmpleados(filtros);
+        this.empleados = data.page.map(empleado => ({
           ...empleado,
           fechaAlta: this.formatDate(empleado.fechaAlta),
-        }));
-        this.empleados = formattedEmpleados || [];
+        })) || [];
       } catch (err) {
         this.error = 'Erro ao carregar os empregados: ' + err.message;
       } finally {
@@ -89,26 +84,14 @@ export default {
 
       this.loading = true;
       this.error = null;
-
       try {
-        console.log(`Tentando excluir empregado com ID: ${empleadoId}`); // Log para depuração
-        const response = await axios.delete(`/api/empleado/del/${empleadoId}`);
-
-        if (response.status === 200) {
-          alert('Empregado excluído com sucesso!');
-          await this.fetchEmpleados({}); // Atualiza a lista após a exclusão
-        } else {
-          throw new Error('Erro inesperado na exclusão.');
-        }
+        await empleadoService.deleteEmpleado(empleadoId);
+        alert('Empregado excluído com sucesso!');
+        await this.fetchEmpleados({});
       } catch (err) {
-        console.error('Erro ao excluir empregado:', err); // Log para depuração
-        if (err.response && err.response.status === 404) {
-          this.error = `Empregado ${empleadoId} não encontrado.`;
-        } else if (err.response && err.response.status === 400) {
-          this.error = 'ID inválido fornecido.';
-        } else {
-          this.error = 'Erro ao excluir empregado: ' + (err.response?.data || err.message);
-        }
+        this.error = err.response?.status === 404
+          ? `Empregado ${empleadoId} não encontrado.`
+          : 'Erro ao excluir empregado: ' + (err.response?.data || err.message);
       } finally {
         this.loading = false;
       }
