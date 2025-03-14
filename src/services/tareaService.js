@@ -10,9 +10,24 @@ export default {
   },
 
   // Buscar tarefas por critérios
-  async getTareas(filtros = {}) {
-    const response = await api.get('/tarea', { params: filtros });
-    return response.data;
+  // async getTareas(filtros = {}) {
+  //   const response = await api.get('/tarea', { params: filtros });
+  //   return response.data;
+  // },
+  async getTareas(filtros = {}, page = 1, limit = 10) {
+    try {
+      const response = await api.get('/tarea', { params: { ...filtros, page, limit } });
+      const totalItems = response.data.total || 0;
+      const totalPages = Math.ceil(totalItems / limit) || 1;
+      return {
+        page: response.data.page || [],
+        totalPages: totalPages,
+        totalItems: totalItems
+      };
+    } catch (error) {
+      console.error('Erro ao buscar tarefas:', error);
+      throw error;
+    }
   },
 
   // Criar uma nova tarefa

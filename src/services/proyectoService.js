@@ -2,16 +2,34 @@ import api from './api';
 
 export default {
   // Listar projetos com filtros
-  async getProyectos(filtros = {}) {
-    const response = await api.get('/proyecto', { params: filtros });
-    return response.data;
-  },
-
+  // async getProyectos(filtros = {}) {
+  //   const response = await api.get('/proyecto', { params: filtros });
+  //   return response.data;
+  // },
+  async getProyectos(filtros = {}, page = 1, limit = 10) {
+      try {
+        const response = await api.get('/proyecto', { 
+          params: { ...filtros, page, limit }
+        });
+        console.log('Resposta do backend:', response.data); // Para debug
+        const totalItems = response.data.total || 0;
+        const totalPages = Math.ceil(totalItems / limit) || 1; // Calcula totalPages
+        return {
+          page: response.data.page || [], // Lista de projetos
+          totalPages: totalPages,        // Calculado com base em total e limit
+          totalItems: totalItems         // Total de itens
+        };
+      } catch (error) {
+        console.error('Erro na chamada da API:', error);
+        throw error;
+      }
+    },
   // Obter detalhes de um projeto por ID
   async getProyectoById(id) {
     const response = await api.get(`/proyecto/${id}`);
     return response.data;
   },
+  
 
   // Criar um projeto
   async createProyecto(proyectoData) {

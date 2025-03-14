@@ -2,9 +2,24 @@ import api from './api';
 
 export default {
   // Listar clientes com filtros
-  async getClientes(filtros = {}) {
-    const response = await api.get('/cliente', { params: { ...filtros, size: 10 } });
-    return response.data;
+  // async getClientes(filtros = {}) {
+  //   const response = await api.get('/cliente', { params: { ...filtros, size: 10 } });
+  //   return response.data;
+  // },
+  async getClientes(filtros = {}, page = 1, limit = 10) {
+    try {
+      const response = await api.get('/cliente', { params: { ...filtros, page, limit } });
+      const totalItems = response.data.total || 0;
+      const totalPages = Math.ceil(totalItems / limit) || 1;
+      return {
+        page: response.data.page || [],
+        totalPages: totalPages,
+        totalItems: totalItems
+      };
+    } catch (error) {
+      console.error('Erro ao buscar clientes:', error);
+      throw error;
+    }
   },
 
   // Buscar um estado por ID
