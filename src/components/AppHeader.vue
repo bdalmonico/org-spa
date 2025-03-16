@@ -1,6 +1,12 @@
 <template>
   <header class="bg-blue-800 text-white p-4 flex justify-between items-center border-b border-blue-900">
-    <div>
+    <div class="flex items-center gap-4">
+      <button 
+        class="md:hidden text-2xl" 
+        @click="toggleSidebar"
+      >
+        ☰
+      </button>
       <h1 class="text-xl text-white">Organizate.es</h1>
     </div>
     <div class="flex items-center gap-4 relative">
@@ -31,6 +37,7 @@ export default {
       settingsIcon: '⚙',
       userEmail: this.getCookie('userEmail') || '',
       userId: this.getCookie('userId') || '',
+      isSidebarOpen: false, // Estado para controlar o sidebar
     };
   },
   mounted() {
@@ -45,6 +52,10 @@ export default {
     toggleSettingsMenu() {
       this.showSettingsMenu = !this.showSettingsMenu;
     },
+    toggleSidebar() {
+      this.isSidebarOpen = !this.isSidebarOpen;
+      this.$emit('toggle-sidebar', this.isSidebarOpen); // Emite evento para o componente pai
+    },
     getCookie(name) {
       const value = `; ${document.cookie}`;
       const parts = value.split(`; ${name}=`);
@@ -53,31 +64,28 @@ export default {
     },
     async fetchEmpleadoNombre() {
       if (!this.userEmail) {
-        this.empleadoNombre = ''; // Limpa o nome se não houver email (usuário deslogado)
+        this.empleadoNombre = '';
         return;
       }
-
       try {
         const response = await axios.get('/api/empleado', {
-          params: {
-            email: this.userEmail.trim(),
-          },
+          params: { email: this.userEmail.trim() },
         });
         const empleados = response.data.page;
         if (empleados && empleados.length > 0) {
           this.empleadoNombre = `${empleados[0].nombre} ${empleados[0].apellido || ''}`.trim() || this.userEmail;
         } else {
-          this.empleadoNombre = this.userEmail; 
+          this.empleadoNombre = this.userEmail;
         }
       } catch (err) {
         console.error('Erro ao buscar nome do empregado:', err);
-        this.empleadoNombre = this.userEmail;k
+        this.empleadoNombre = this.userEmail;
       }
     },
     logout() {
       document.cookie = 'userId=; path=/; max-age=0';
       document.cookie = 'userEmail=; path=/; max-age=0';
-      this.userEmail = ''; 
+      this.userEmail = '';
       this.userId = '';
       this.$router.push('/login');
       this.showSettingsMenu = false;

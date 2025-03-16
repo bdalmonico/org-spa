@@ -1,19 +1,19 @@
 <template>
-  <div class="p-8 bg-gray-100 min-h-screen">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div class="p-2 md:p-4 bg-gray-100 min-h-screen">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
       <!-- Widget de Projetos -->
-      <div class="bg-white p-6 rounded-lg shadow-lg">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-semibold text-blue-800">Projetos Recentes</h2>
+      <div class="bg-white p-4 md:p-6 rounded-lg shadow-lg">
+        <div class="flex justify-between items-center mb-2 md:mb-4">
+          <h2 class="text-lg md:text-xl font-semibold text-blue-800">Projetos Recentes</h2>
           <div class="flex gap-2">
             <button
-              class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors cursor-pointer"
+              class="bg-blue-500 text-white px-2 md:px-3 py-1 rounded hover:bg-blue-600 transition-colors cursor-pointer text-sm md:text-base"
               @click="$router.push('/projetos')"
             >
               Ver Mais
             </button>
             <button
-              class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition-colors cursor-pointer"
+              class="bg-green-500 text-white px-2 md:px-3 py-1 rounded hover:bg-green-600 transition-colors cursor-pointer text-sm md:text-base"
               @click="showCrearProyectoModal = true"
             >
               Adicionar Novo
@@ -30,18 +30,18 @@
       </div>
 
       <!-- Widget de Tarefas -->
-      <div class="bg-white p-6 rounded-lg shadow-lg">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-semibold text-blue-800">Tarefas Recentes</h2>
+      <div class="bg-white p-4 md:p-6 rounded-lg shadow-lg">
+        <div class="flex justify-between items-center mb-2 md:mb-4">
+          <h2 class="text-lg md:text-xl font-semibold text-blue-800">Tarefas Recentes</h2>
           <div class="flex gap-2">
             <button
-              class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors cursor-pointer"
+              class="bg-blue-500 text-white px-2 md:px-3 py-1 rounded hover:bg-blue-600 transition-colors cursor-pointer text-sm md:text-base"
               @click="$router.push('/tareas')"
             >
               Ver Mais
             </button>
             <button
-              class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition-colors cursor-pointer"
+              class="bg-green-500 text-white px-2 md:px-3 py-1 rounded hover:bg-green-600 transition-colors cursor-pointer text-sm md:text-base"
               @click="showCrearTareaModal = true"
             >
               Adicionar Novo

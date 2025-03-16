@@ -1,8 +1,8 @@
 <template>
   <div class="flex flex-col h-screen">
-    <Header />
+    <Header @toggle-sidebar="toggleSidebar" />
     <div class="flex flex-1">
-      <Sidebar />
+      <Sidebar :is-open="isSidebarOpen" @toggle-sidebar="toggleSidebar" />
       <router-view class="flex-1 p-8 bg-gray-100" />
     </div>
   </div>
@@ -16,6 +16,16 @@ export default {
   components: {
     Header,
     Sidebar,
+  },
+  data() {
+    return {
+      isSidebarOpen: false,
+    };
+  },
+  methods: {
+    toggleSidebar(isOpen) {
+      this.isSidebarOpen = isOpen;
+    },
   },
 };
 </script>
