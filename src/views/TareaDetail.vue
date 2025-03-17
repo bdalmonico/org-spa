@@ -22,8 +22,8 @@
       <p class="mb-2"><strong class="text-gray-800">ID:</strong> {{ tarea.id }}</p>
       <p class="mb-2"><strong class="text-gray-800">Nome:</strong> {{ tarea.nombre }}</p>
       <p class="mb-2"><strong class="text-gray-800">Descrição:</strong> {{ tarea.descripcion }}</p>
-      <p class="mb-2"><strong class="text-gray-800">Estado ID:</strong> {{ tarea.estadoId }}</p>
-      <p class="mb-2"><strong class="text-gray-800">Proyecto ID:</strong> {{ tarea.proyectoId }}</p>
+      <p class="mb-2"><strong class="text-gray-800">Estado:</strong> {{ tarea.estadoNombre || 'Carregando...' }}</p>
+      <p class="mb-2"><strong class="text-gray-800">Projeto:</strong> {{ tarea.proyectoNombre || 'Carregando...' }}</p>
       <p class="mb-2"><strong class="text-gray-800">Data Estimada de Início:</strong> {{ formatDate(tarea.fechaEstimadaInicio) }}</p>
       <p class="mb-2"><strong class="text-gray-800">Data Estimada de Fim:</strong> {{ formatDate(tarea.fechaEstimadaFin) }}</p>
       <p class="mb-2"><strong class="text-gray-800">Data Real de Início:</strong> {{ formatDate(tarea.fechaRealInicio) }}</p>
@@ -195,6 +195,8 @@
 import tareaService from '../services/tareaService';
 import comentarioTareaService from '../services/comentarioTareaService';
 import imputacionService from '../services/imputacionService';
+import estadoService from '../services/estadoService';
+import proyectoService from '../services/proyectoService';
 import Cookies from 'js-cookie';
 import EditarTareaModal from '../components/EditarTareaModal.vue';
 import { formatDate } from '../utils/dateUtils';
@@ -242,22 +244,45 @@ export default {
       this.error = null;
       const id = this.$route.params.id;
       try {
-        const [tarea, comentarios, imputaciones] = await Promise.all([
-          tareaService.getTareaById(id),
+        // Primeiro, buscar os dados da tarefa
+        const tareaResponse = await tareaService.getTareaById(id);
+
+        // Em seguida, buscar o nome do estado e do projeto
+        const [estadoResponse, proyectoResponse] = await Promise.all([
+          estadoService.getEstadoById(tareaResponse.estadoId),
+          proyectoService.getProyectoById(tareaResponse.proyectoId),
+        ]);
+
+        // Buscar comentários e imputações em paralelo
+        const [comentariosResponse, imputacionesResponse] = await Promise.all([
           comentarioTareaService.getComentariosByTareaId(id),
           imputacionService.getImputacionesByCriteria({ tareaId: id }),
         ]);
-        this.tarea = tarea;
-        this.comentarios = (comentarios.page || []).map(comentario => ({
+
+        this.tarea = {
+          ...tareaResponse,
+          estadoNombre: estadoResponse.nombre || 'Desconhecido', // Nome do estado
+          proyectoNombre: proyectoResponse.nombre || 'Desconhecido', // Nome do projeto
+          fechaEstimadaInicio: formatDate(tareaResponse.fechaEstimadaInicio),
+          fechaEstimadaFin: formatDate(tareaResponse.fechaEstimadaFin),
+          fechaRealInicio: formatDate(tareaResponse.fechaRealInicio),
+          fechaRealFin: formatDate(tareaResponse.fechaRealFin),
+        };
+
+        this.comentarios = (comentariosResponse.page || []).map(comentario => ({
           ...comentario,
           fechaHora: formatDate(comentario.fechaHora),
         }));
-        this.imputaciones = (imputaciones.page || []).map(imputacion => ({
+
+        this.imputaciones = (imputacionesResponse.page || []).map(imputacion => ({
           ...imputacion,
           fechaHora: formatDate(imputacion.fechaHora),
         }));
+
+        console.log('Tarefa carregada:', this.tarea);
       } catch (err) {
-        this.error = 'Erro ao carregar a tarefa, comentários ou imputações: ' + (err.response?.data?.message || err.message);
+        this.error = 'Erro ao carregar a tarefa, estado, projeto, comentários ou imputações: ' + (err.response?.data?.message || err.message);
+        console.error('Erro:', err);
       } finally {
         this.loading = false;
       }

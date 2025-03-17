@@ -11,7 +11,7 @@
       </thead>
       <tbody>
         <tr
-          v-for="item in itensComEstado"
+          v-for="item in itens"
           :key="item.id"
           @click="$emit('item-clicked', item.id)"
           class="hover:bg-gray-100 border-b border-gray-200 cursor-pointer"
@@ -58,7 +58,7 @@
     <!-- Layout Mobile -->
     <div v-else class="space-y-2">
       <div
-        v-for="item in itensComEstado"
+        v-for="item in itens"
         :key="item.id"
         @click="$emit('item-clicked', item.id)"
         class="bg-white border border-gray-300 rounded-lg p-3 flex justify-between items-center hover:bg-gray-100 cursor-pointer"
@@ -98,7 +98,7 @@
     <!-- Paginação -->
     <div class="mt-4 flex flex-col md:flex-row justify-between items-center">
       <p class="text-gray-600">
-        Mostrando {{ itensComEstado.length }} de {{ totalItems }} tarefas
+        Mostrando {{ itens.length }} de {{ totalItems }} tarefas
       </p>
       <div class="flex space-x-2 mt-2 md:mt-0">
         <button
@@ -124,8 +124,6 @@
 </template>
 
 <script>
-import estadoService from '../services/estadoService';
-
 export default {
   props: {
     itens: {
@@ -161,14 +159,10 @@ export default {
   data() {
     return {
       menuAberto: null,
-      estadosCache: {},
-      itensComEstado: [],
-      isMobile: window.innerWidth < 768, // Define mobile como largura < 768px
+      isMobile: window.innerWidth < 768,
     };
   },
-  async created() {
-    this.itensComEstado = [...this.itens];
-    await this.fetchEstados();
+  created() {
     window.addEventListener('resize', this.handleResize);
   },
   destroyed() {
@@ -178,43 +172,6 @@ export default {
     toggleMenu(itemId) {
       this.menuAberto = this.menuAberto === itemId ? null : itemId;
     },
-    async fetchEstados() {
-      try {
-        const estadoIds = [...new Set(this.itens.map(item => item.estadoId))].filter(id => id != null);
-        if (estadoIds.length === 0) {
-          console.log('Nenhum estadoId para buscar');
-          this.itensComEstado = this.itens.map(item => ({
-            ...item,
-            estadoNombre: 'Estado não encontrado',
-          }));
-          return;
-        }
-
-        console.log('Buscando estados para IDs:', estadoIds);
-
-        const requests = estadoIds.map(id =>
-          estadoService.getEstadoById(id).catch(err => {
-            console.error(`Erro ao buscar estado ${id}:`, err);
-            return { nombre: 'Estado não encontrado' };
-          })
-        );
-        const responses = await Promise.all(requests);
-
-        responses.forEach((estado, index) => {
-          const estadoId = estadoIds[index];
-          this.estadosCache[estadoId] = estado.nombre || 'Estado não encontrado';
-          console.log(`Estado ${estadoId}: ${this.estadosCache[estadoId]}`);
-        });
-
-        this.itensComEstado = this.itens.map(item => ({
-          ...item,
-          estadoNombre: this.estadosCache[item.estadoId] || 'Estado não encontrado',
-        }));
-      } catch (err) {
-        console.error('Erro ao carregar os estados:', err);
-        this.$emit('update:error', 'Erro ao carregar os estados: ' + err.message);
-      }
-    },
     verProyecto(proyectoId) {
       this.$router.push(`/projetos/${proyectoId}`);
     },
@@ -222,17 +179,10 @@ export default {
       this.isMobile = window.innerWidth < 768;
     },
   },
-  watch: {
-    itens(newItens) {
-      this.itensComEstado = [...newItens];
-      this.fetchEstados();
-    },
-  },
 };
 </script>
 
 <style scoped>
-/* Estilo para mobile */
 @media (max-width: 767px) {
   .lista {
     padding: 0 8px;

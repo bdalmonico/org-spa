@@ -12,7 +12,7 @@
         Criar Nova Tarefa
       </button>
     </div>
-    <Buscador :campos="camposBusca" @buscar="handleBuscar" />
+    <Buscador :campos="camposBusca" :is-mobile="isMobile" @buscar="handleBuscar" />
     <ListaTareas
       :itens="tareas"
       :colunas="colunasTabela"
@@ -72,10 +72,10 @@ export default {
       totalItems: 0,
       itemsPerPage: 10,
       filtrosAtuais: {},
-      isMobile: window.innerWidth < 768, // Define mobile como largura < 768px
+      isMobile: window.innerWidth < 768,
       camposBusca: [
         { name: 'nombre', label: 'Título', type: 'text', placeholder: 'Digite o título' },
-        { name: 'estadoId', label: 'Estado ID', type: 'number', placeholder: 'ID do estado' },
+        { name: 'estadoId', label: 'Estado', type: 'select', placeholder: 'Selecione o estado' },
         { name: 'proyectoId', label: 'Projeto ID', type: 'number', placeholder: 'ID do projeto' },
       ],
       colunasTabela: [
@@ -125,7 +125,7 @@ export default {
       }
     },
     getEstadoBadge(estadoId) {
-      switch (estadoId) {
+      switch (Number(estadoId)) {
         case 1: return { text: 'ABERTO', class: 'bg-green-500 text-white' };
         case 6: return { text: 'ACTIVO', class: 'bg-blue-500 text-white' };
         case 4: return { text: 'APROBACION', class: 'bg-yellow-500 text-black' };
@@ -139,7 +139,12 @@ export default {
     },
     handleBuscar(filtros) {
       this.currentPage = 1;
-      this.fetchTareas(filtros);
+      const filtrosAjustados = {
+        ...filtros,
+        estadoId: filtros.estadoId ? Number(filtros.estadoId) : undefined,
+        proyectoId: filtros.proyectoId ? Number(filtros.proyectoId) : undefined,
+      };
+      this.fetchTareas(filtrosAjustados);
     },
     handlePageChange(newPage) {
       if (newPage >= 1 && newPage <= this.totalPages) {
@@ -160,7 +165,7 @@ export default {
       try {
         const [comentariosResponse, imputacionesResponse] = await Promise.all([
           comentarioTareaService.getComentariosByTareaId(tarea.id),
-          imputacionService.getImputacionesByCriteria({ tareaId: tarea.id }),
+          imputacionService.getImputacionesByCriteria({ tareaId: tarefa.id }),
         ]);
         const comentarioCount = (comentariosResponse.page || []).length;
         const imputacionCount = (imputacionesResponse.page || []).length;
@@ -168,7 +173,7 @@ export default {
         const confirmMessage = `Tem certeza de que deseja excluir a tarefa "${tarea.nombre}"?${comentarioCount > 0 || imputacionCount > 0 ? ` Isso excluirá ${comentarioCount} comentário(s) e ${imputacionCount} imputação(ões) associada(s).` : ''}`;
         if (!confirm(confirmMessage)) return;
 
-        console.log('Excluindo tarefa com ID:', tarea.id);
+        console.log('Excluindo tarefa com ID:', tarefa.id);
         await tareaService.deleteTarea(tarea.id);
         await this.fetchTareas(this.filtrosAtuais);
       } catch (err) {

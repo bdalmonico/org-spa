@@ -1,9 +1,12 @@
 <template>
-  <div class="p-8 bg-gray-100">
+  <div :class="['bg-gray-100', isMobile ? 'p-2' : 'p-8']">
     <div class="flex justify-between items-center mb-4">
-      <h1 class="text-2xl text-blue-800">Lista de Empregados</h1>
+      <h1 :class="['text-blue-800', isMobile ? 'text-xl' : 'text-2xl']">Lista de Empregados</h1>
       <button
-        class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors cursor-pointer"
+        :class="[
+          'bg-green-500 text-white rounded hover:bg-green-600 transition-colors cursor-pointer',
+          isMobile ? 'px-2 py-1 text-sm' : 'px-4 py-2'
+        ]"
         @click="showCrearEmpleadoModal = true"
       >
         Adicionar Novo Empregado
@@ -41,6 +44,7 @@ export default {
       loading: false,
       error: null,
       showCrearEmpleadoModal: false,
+      isMobile: window.innerWidth < 768, // Define mobile como largura < 768px
       camposBusca: [
         { name: 'nombre', label: 'Nome', type: 'text', placeholder: 'Digite o nome' },
         { name: 'email', label: 'Email', type: 'text', placeholder: 'Digite o email' },
@@ -57,8 +61,14 @@ export default {
       ],
     };
   },
+  created() {
+    window.addEventListener('resize', this.handleResize);
+  },
   mounted() {
     this.fetchEmpleados({});
+  },
+  destroyed() {
+    window.removeEventListener('resize', this.handleResize);
   },
   methods: {
     async fetchEmpleados(filtros) {
@@ -99,6 +109,9 @@ export default {
     formatDate(date) {
       if (!date) return '';
       return new Date(date).toLocaleDateString('pt-BR');
+    },
+    handleResize() {
+      this.isMobile = window.innerWidth < 768;
     },
   },
 };

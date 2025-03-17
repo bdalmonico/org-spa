@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <div class="min-h-screen bg-gray-100 flex items-center justify-center">
     <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
       <h1 class="text-2xl text-blue-800 text-center mb-6">Login</h1>
@@ -116,6 +116,161 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+  },
+};
+</script> -->
+
+<template>
+  <div class="min-h-screen bg-gray-100 flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+      <h1 class="text-2xl text-blue-800 text-center mb-6">Login</h1>
+      <form @submit.prevent="handleLogin" class="space-y-4">
+        <div>
+          <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+          <input
+            v-model="form.email"
+            type="email"
+            id="email"
+            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            placeholder="Digite seu email"
+            required
+          />
+        </div>
+        <div>
+          <label for="password" class="block text-sm font-medium text-gray-700">Senha</label>
+          <input
+            v-model="form.password"
+            type="password"
+            id="password"
+            class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+            placeholder="Digite sua senha"
+            required
+          />
+        </div>
+        <div class="flex justify-between gap-2">
+          <button
+            type="submit"
+            class="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+            :disabled="loading"
+          >
+            Entrar
+          </button>
+          <button
+            type="button"
+            class="flex-1 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
+            @click="openCreateModal"
+            :disabled="loading"
+          >
+            Criar Empregado
+          </button>
+        </div>
+        <p v-if="error" class="mt-2 text-red-600 text-center">{{ error }}</p>
+      </form>
+    </div>
+
+    <!-- Modal de Criar Empregado -->
+    <create-empleado-modal
+      :is-open="isCreateModalOpen"
+      @close="closeCreateModal"
+      @empleado-created="handleEmpleadoCreated"
+    />
+  </div>
+</template>
+
+<script>
+import axios from 'axios';
+import CreateEmpleadoModal from '../components/CrearEmpleadoModal.vue'; // Ajuste o caminho conforme sua estrutura
+
+export default {
+  components: {
+    CreateEmpleadoModal,
+  },
+  data() {
+    return {
+      form: {
+        email: '',
+        password: '',
+      },
+      loading: false,
+      error: null,
+      isCreateModalOpen: false,
+    };
+  },
+  methods: {
+    async handleLogin() {
+      if (!this.form.email || !this.form.password) {
+        this.error = 'Por favor, preencha todos os campos.';
+        return;
+      }
+
+      this.loading = true;
+      this.error = null;
+
+      try {
+        // Buscar o ID do usuário com base no email
+        const response = await axios.get('/api/empleado', {
+          params: {
+            email: this.form.email.trim(),
+          },
+        });
+
+        const empleados = response.data.page;
+        if (!empleados || empleados.length === 0) {
+          this.error = 'Nenhum usuário encontrado com este email.';
+          return;
+        }
+
+        const empleado = empleados[0];
+        const userId = empleado.id;
+
+        if (!userId) {
+          this.error = 'Não foi possível obter o ID do usuário.';
+          return;
+        }
+
+        // Autenticar usando o ID e a senha
+        const empleadoDTO = {
+          id: userId,
+          nombre: 'Placeholder',
+          apellido: 'Placeholder',
+          email: this.form.email.trim(),
+          contrasena: this.form.password.trim(),
+          fechaEstimadaInicio: '2023-01-01',
+          rolId: 1,
+        };
+
+        const authResponse = await axios.post('/api/empleado/autenticar', empleadoDTO, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        });
+
+        const authenticatedEmpleado = authResponse.data;
+
+        // Salvar cookies
+        document.cookie = `userId=${authenticatedEmpleado.id}; path=/; max-age=86400`;
+        document.cookie = `userEmail=${authenticatedEmpleado.email}; path=/; max-age=86400`;
+
+        this.$root.$emit('login-success', authenticatedEmpleado.email, authenticatedEmpleado.id);
+
+        this.$router.push('/home');
+      } catch (err) {
+        this.error = 'Erro ao fazer login: ' + (err.response?.data || err.message);
+      } finally {
+        this.loading = false;
+      }
+    },
+    openCreateModal() {
+      this.isCreateModalOpen = true;
+    },
+    closeCreateModal() {
+      this.isCreateModalOpen = false;
+    },
+    handleEmpleadoCreated() {
+      this.error = 'Empregado criado com sucesso! Faça login com as novas credenciais.';
+      this.isCreateModalOpen = false;
     },
   },
 };

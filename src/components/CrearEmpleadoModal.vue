@@ -17,7 +17,7 @@
         </div>
         <div>
           <label for="contrasena" class="block text-sm font-medium text-gray-700">Senha</label>
-          <input v-model="form.contrasena" type="password" id="contrasena" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" placeholder="Digite a senha do empregado" />
+          <input v-model="form.contrasena" type="password" id="contrasena" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" placeholder="Digite a senha do empregado" required />
         </div>
         <div>
           <label for="fechaAlta" class="block text-sm font-medium text-gray-700">Data de Admissão</label>
@@ -28,7 +28,7 @@
           <input v-model.number="form.rolId" type="number" id="rolId" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50" placeholder="Digite o ID do papel" required />
         </div>
         <div class="flex gap-2">
-          <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors cursor-pointer" :disabled="loading || !form.nombre || !form.apellido || !form.email || !form.fechaAlta || !form.rolId">Criar</button>
+          <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors cursor-pointer" :disabled="loading || !form.nombre || !form.apellido || !form.email || !form.contrasena || !form.fechaAlta || !form.rolId">Criar</button>
           <button type="button" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors cursor-pointer" @click="closeModal" :disabled="loading">Cancelar</button>
         </div>
       </form>
@@ -51,14 +51,19 @@ export default {
   },
   methods: {
     async submitForm() {
-      if (!this.form.nombre || !this.form.apellido || !this.form.email || !this.form.fechaAlta || !this.form.rolId) {
-        this.error = 'Nome, Sobrenome, Email, Data de Admissão e ID do Papel são obrigatórios.';
+      if (!this.form.nombre || !this.form.apellido || !this.form.email || !this.form.contrasena || !this.form.fechaAlta || !this.form.rolId) {
+        this.error = 'Todos os campos são obrigatórios, incluindo a senha.';
         return;
       }
       this.loading = true;
       this.error = null;
       try {
-        await empleadoService.createEmpleado(this.form);
+        // Ajustar o formato da data antes de enviar
+        const empleadoData = {
+          ...this.form,
+          fechaAlta: new Date(this.form.fechaAlta).toISOString() // Converte para '2025-02-22T00:00:00.000Z'
+        };
+        await empleadoService.crearEmpleado(empleadoData);
         this.$emit('empleadoCreated');
         this.closeModal();
       } catch (err) {

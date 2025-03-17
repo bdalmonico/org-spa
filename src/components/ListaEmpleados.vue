@@ -1,12 +1,13 @@
 <template>
   <div class="p-6">
-    <h2 class="text-2xl font-bold text-blue-800 mb-4">Lista de Empregados</h2>
+    <h2 :class="['font-bold text-blue-800 mb-4', isMobile ? 'text-xl' : 'text-2xl']">Lista de Empregados</h2>
 
     <div v-if="empleados.length === 0" class="text-gray-500">
       Nenhum empregado encontrado.
     </div>
-    <div v-else class="overflow-x-auto">
-      <table class="min-w-full bg-white border border-gray-300 rounded-lg shadow">
+    <div v-else>
+      <!-- Layout Desktop -->
+      <table v-if="!isMobile" class="min-w-full bg-white border border-gray-300 rounded-lg shadow">
         <thead>
           <tr>
             <th v-for="coluna in colunas" :key="coluna.key" class="py-3 px-4 bg-blue-800 text-white text-left font-semibold border-b border-gray-300">
@@ -40,6 +41,35 @@
           </tr>
         </tbody>
       </table>
+
+      <!-- Layout Mobile -->
+      <div v-else class="space-y-2">
+        <div
+          v-for="empleado in empleadosConRol"
+          :key="empleado.id"
+          class="bg-white border border-gray-300 rounded-lg p-3 flex justify-between items-center hover:bg-gray-100 cursor-pointer"
+        >
+          <div class="flex-1">
+            <p class="text-gray-700 font-semibold">{{ empleado.nombre }}</p>
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-400 text-white">
+              {{ empleado.rolNombre || 'Desconhecido' }}
+            </span>
+          </div>
+          <div class="relative">
+            <button @click.stop="toggleMenu(empleado.id)" class="text-gray-500 hover:text-gray-700 cursor-pointer">
+              <i class="fas fa-cog"></i>
+            </button>
+            <div v-if="menuAberto === empleado.id" class="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+              <button
+                class="w-full px-4 py-2 text-left text-red-500 hover:bg-gray-100 cursor-pointer"
+                @click.stop="$emit('delete-item', empleado.id)"
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <p v-if="loading" class="mt-4 text-gray-700">Carregando...</p>
@@ -62,11 +92,16 @@ export default {
       menuAberto: null,
       empleadosConRol: [],
       rolesCache: {},
+      isMobile: window.innerWidth < 768, // Define mobile como largura < 768px
     };
   },
   created() {
     this.empleadosConRol = [...this.empleados];
     this.fetchRoles();
+    window.addEventListener('resize', this.handleResize);
+  },
+  destroyed() {
+    window.removeEventListener('resize', this.handleResize);
   },
   methods: {
     toggleMenu(itemId) {
@@ -95,6 +130,9 @@ export default {
         this.empleadosConRol = this.empleados.map(e => ({ ...e, rolNombre: 'Erro ao buscar papel' }));
       }
     },
+    handleResize() {
+      this.isMobile = window.innerWidth < 768;
+    },
   },
   watch: {
     empleados(newEmpleados) {
@@ -104,3 +142,12 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+/* Estilo para mobile */
+@media (max-width: 767px) {
+  .p-6 {
+    padding: 1rem;
+  }
+}
+</style>

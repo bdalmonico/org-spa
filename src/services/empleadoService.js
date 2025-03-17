@@ -8,18 +8,10 @@ export default {
   },
 
   // Criar um empregado
-  async createEmpleado(empleadoData) {
-    const formData = new URLSearchParams();
-    formData.append('nombre', empleadoData.nombre.trim());
-    formData.append('apellido', empleadoData.apellido.trim());
-    formData.append('email', empleadoData.email.trim());
-    if (empleadoData.contrasena) formData.append('contrasena', empleadoData.contrasena);
-    formData.append('fechaAlta', empleadoData.fechaAlta);
-    formData.append('rolId', empleadoData.rolId.toString());
-
-    const response = await api.post('/empleado', formData, {
+  async crearEmpleado(empleadoData) {
+    const response = await api.post('/empleado', empleadoData, {
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
     });
